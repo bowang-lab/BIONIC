@@ -19,9 +19,20 @@ An overview of BIONIC can be seen below.
 8. Into a reconstruction of the input networks.
 9. BIONIC minimizes the difference between the reconstructed network and the input networks (i.e. reconstruction error) and by doing so, improves the quality of the integrated feature set.
 
-### Installation
 BIONIC is implemented in Python 3.7 and uses PyTorch.
 
+### Installation
+NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
+
+These installation instructions assume you have Anaconda installed on your machine.
+
+1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must** be 10.0, 10.1+ will not work.
+2. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing `export PATH=/usr/local/cuda-10.0/bin:$PATH`.
+3. Add `cuda-10.0/include` to `$CPATH` by doing `export CPATH=/usr/local/cuda-10.0/include:$CPATH`.
+4. (Linux) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by doing `export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH` or (macOS) add `cuda-10.0/lib` to `$DYLD_LIBRARY_PATH` by doing `export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib`
+Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
+5. Create a conda environment from the `environment.yml` file by doing `conda env create -f environment.yml`. This will create an environment called `bionic` which (if not already activated) should be activated by running `conda activate bionic`.
+6. test
 
 
 ### Usage
