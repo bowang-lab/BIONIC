@@ -26,7 +26,7 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
 
 These installation instructions assume you have Anaconda installed on your machine.
 
-1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must** be 10.0, 10.1+ will not work.
+1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must** be 10.0, **10.1+ will not work**.
 2. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing `export PATH=/usr/local/cuda-10.0/bin:$PATH`.
 3. Add `cuda-10.0/include` to `$CPATH` by doing `export CPATH=/usr/local/cuda-10.0/include:$CPATH`.
 4. (Linux) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by doing `export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH` or (macOS) add `cuda-10.0/lib` to `$DYLD_LIBRARY_PATH` by doing `export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib`
