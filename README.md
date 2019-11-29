@@ -31,7 +31,7 @@ These installation instructions assume you have Anaconda installed on your machi
 3. Add `cuda-10.0/include` to `$CPATH` by doing `export CPATH=/usr/local/cuda-10.0/include:$CPATH`.
 4. (Linux) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by doing `export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH` or (macOS) add `cuda-10.0/lib` to `$DYLD_LIBRARY_PATH` by doing `export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib`
 Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
-5. Create a conda environment from the `environment.yml` file by doing `conda env create -f environment.yml`. This will create an environment called `bionic` which (if not already activated) should be activated by running `conda activate bionic`.
+5. Create a conda environment from the `environment.yml` file by doing `conda env create -f environment.yml`. This will create an environment with all the required dependencies called `bionic` which, if not already activated, should be activated by running `conda activate bionic`.
 6. test
 
 
