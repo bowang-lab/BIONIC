@@ -4,7 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name="BioNIC (Biological Network Integration using Convolutions)",
+    name="BioNIC",
     version="0.1.0",
     author="Duncan Forster",
     author_email="duncan.forster@mail.utoronto.ca",
@@ -32,8 +32,15 @@ setuptools.setup(
         "Graph Neural Networks",
         "Graph Attention Network"
     ],
+    dependency_links=[
+        "git+https://github.com/duncster94/pytorch_geometric@master#egg=torch-geometric-1.0"
+    ],
     install_requires=[
-        "torch-geometric @ https://github.com/duncster94/pytorch_geometric/master.zip#egg=torch-geometric-1.0"
+        "torch>=1.3",
+        "torch-scatter>=1.2.0",
+        "torch-sparse>=0.4.0"
+        "torch-cluster>=1.4.2",
+        "torch-geometric>=1.0",
     ],
     zip_safe=False
 )
