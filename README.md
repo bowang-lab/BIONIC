@@ -1,7 +1,5 @@
 ### Introduction
-BIONIC is a deep-learning based biological network integration algorithm that uses graph convolutional networks (GCN) to
-learn integrated features for genes or proteins across input networks. BIONIC produces high-quality node features and is
-scalable both in number of networks and network size.
+BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that extends the graph convolutional network (GCN) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality node features and is scalable both in number of networks and network size.
 
 An overview of BIONIC can be seen below.
 
@@ -19,12 +17,12 @@ An overview of BIONIC can be seen below.
 8. Into a reconstruction of the input networks.
 9. BIONIC minimizes the difference between the reconstructed network and the input networks (i.e. reconstruction error) and by doing so, improves the quality of the integrated feature set.
 
-BIONIC is implemented in Python 3.7 and uses PyTorch.
+BIONIC is implemented in [Python 3.7](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
 
 ### Installation
 NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
 
-These installation instructions assume you have Anaconda installed on your machine.
+1. Download and install [Anaconda](https://www.anaconda.com/distribution/) for Python 3.x.
 
 1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must be 10.0**, 10.1+ will not work.
 2. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing `export PATH=/usr/local/cuda-10.0/bin:$PATH`.
