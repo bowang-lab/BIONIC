@@ -27,32 +27,33 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
 1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must be 10.0**, 10.1+ will not work.
 2. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing
         
-        >>> export PATH=/usr/local/cuda-10.0/bin:$PATH
+        $ export PATH=/usr/local/cuda-10.0/bin:$PATH
+
 3. Add `cuda-10.0/include` to `$CPATH` by running
 
-        >>> export CPATH=/usr/local/cuda-10.0/include:$CPATH
+        $ export CPATH=/usr/local/cuda-10.0/include:$CPATH
         
 4. (**Linux**) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by running
 
-        >>> export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH
+        $ export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH
 
     (**macOS**) Add `cuda-10.0/lib` to `$DYLD_LIBRARY_PATH` by doing
     
-        >>> export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib
+        $ export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib
         
     (**Windows**) TODO
     
-        >>> add to windows path
+        $ add to windows path
     
     Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
 5. Create a conda environment from the `environment.yml` file by doing:
   
-        >>> conda env create -f environment.yml
+        $ conda env create -f environment.yml
           
     This will create an environment called `bionic` with all the required dependencies except for [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
 6. Next, to install the required PyTorch Geometric dependencies on **Linux** run:
 
-        >>> . install_PyG.sh
+        $ . install_PyG.sh
         
     For **macOS** and **Windows**, do the following:
     1. TODO
@@ -61,7 +62,7 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
     
 7. Ensure the `bionic` environment is active and test BIONIC is properly installed with
 
-        >>> python main.py -c gav_krog.json
+        $ python main.py -c gav_krog.json
 
 ### Usage
 
