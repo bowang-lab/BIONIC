@@ -16,7 +16,7 @@
 
   "load_pretrained_model": false,
 
-  "sample_while_training": true,
+  "sample_while_training": false,
   "sample_rate": 2,
 
   "tensorboard": false,
