@@ -1,4 +1,4 @@
-### Introduction
+## Introduction
 BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that extends the graph convolutional network (GCN) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality node features and is scalable both in number of networks and network size.
 
 An overview of BIONIC can be seen below.
@@ -19,21 +19,44 @@ An overview of BIONIC can be seen below.
 
 BIONIC is implemented in [Python 3](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
 
-### Installation
+## Installation
 NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
+
+### [Docker](https://www.docker.com/) (Recommended, Linux only)
+
+If you are on a Linux machine it's recommended to run BIONIC in a Docker container. 
+
+1. Download or copy the Dockerfile from `TODO`
+2. Build the BIONIC Docker image by running
+
+        $ docker build -t "bionic" /path/to/Dockerfile
+   
+   NOTE: This may take some time.
+3. Install `nvidia-container-toolkit` by running
+
+        $ apt-get install -y nvidia-container-toolkit
+        
+4. Create a BIONIC instance by running
+
+        $ docker run -it --gpus all --ipc=host --network=host --volume=$PWD:/app -e NVIDIA_VISIBLE_DEVICES=0 "bionic" /bin/bash
+
+TODO
+
+
+### TODO
 
 1. Download and install [Anaconda](https://www.anaconda.com/distribution/) for Python 3.x.
 
-1. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must be 10.0**, 10.1+ will not work.
-2. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing
+2. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must be 10.0**, 10.1+ will not work.
+3. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing
         
         $ export PATH=/usr/local/cuda-10.0/bin:$PATH
 
-3. Add `cuda-10.0/include` to `$CPATH` by running
+4. Add `cuda-10.0/include` to `$CPATH` by running
 
         $ export CPATH=/usr/local/cuda-10.0/include:$CPATH
         
-4. (**Linux**) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by running
+5. (**Linux**) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by running
 
         $ export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH
 
@@ -46,12 +69,12 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
         $ add to windows path
     
     Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
-5. Create a conda environment from the `environment.yml` file by doing:
+6. Create a conda environment from the `environment.yml` file by doing:
   
         $ conda env create -f environment.yml
           
     This will create an environment called `bionic` with all the required dependencies except for [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
-6. Next, to install the required PyTorch Geometric dependencies on **Linux** run:
+7. Next, to install the required PyTorch Geometric dependencies on **Linux** run:
 
         $ . install_PyG.sh
         
@@ -60,10 +83,10 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
     2. TODO
     3. TODO
     
-7. Ensure the `bionic` environment is active and test BIONIC is properly installed with
+8. Ensure the `bionic` environment is active and test BIONIC is properly installed with
 
         $ python main.py -c gav_krog.json
 
-### Usage
+## Usage
 
-### Datasets
+## Datasets
