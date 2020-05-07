@@ -20,17 +20,16 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence"
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     keywords=[
         "Biological Network Integration",
         "Protein-protein Interaction",
         "Co-expression",
-        "Genetic Interaction"
-        "Omics",
+        "Genetic Interaction" "Omics",
         "Graph Convolutional Networks",
         "Graph Neural Networks",
-        "Graph Attention Network"
+        "Graph Attention Network",
     ],
     dependency_links=[
         "git+https://github.com/duncster94/pytorch_geometric@master#egg=torch-geometric-1.0"
@@ -38,9 +37,8 @@ setuptools.setup(
     install_requires=[
         "torch>=1.3",
         "torch-scatter>=1.2.0",
-        "torch-sparse>=0.4.0"
-        "torch-cluster>=1.4.2",
+        "torch-sparse>=0.4.0" "torch-cluster>=1.4.2",
         "torch-geometric>=1.0",
     ],
-    zip_safe=False
+    zip_safe=False,
 )

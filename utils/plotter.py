@@ -13,17 +13,17 @@ def plot_losses(train_losses, names, plot_path):
 
     if len(train_losses) > 10:
         plt.plot(x_epochs, total_loss)
-        plt.title('Total Reconstruction Error')
+        plt.title("Total Reconstruction Error")
     else:
         for loss, name in zip(train_losses, names):
             plt.plot(x_epochs, loss, label=name)
-        plt.plot(x_epochs, total_loss, label='Total')
-        plt.title('Reconstruction Errors')
+        plt.plot(x_epochs, total_loss, label="Total")
+        plt.title("Reconstruction Errors")
         plt.legend()
 
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.yscale('log')
-    plt.grid(which='minor', axis='y')
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.yscale("log")
+    plt.grid(which="minor", axis="y")
 
     plt.savefig(plot_path)

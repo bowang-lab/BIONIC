@@ -3,7 +3,7 @@
     "Gavin.txt",
     "Krogan.txt"
   ],
-  "epochs": 1000,
+  "epochs": 10,
   "batch_size": 4096,
   "learning_rate": 0.0003,
   "gat_shapes": {
@@ -14,11 +14,8 @@
   "embedding_size": 256,
   "save_model": false,
 
-  "load_pretrained_model": false,
-
-  "sample_while_training": false,
   "sample_rate": 2,
 
-  "tensorboard": false,
+  "use_tensorboard": false,
   "plot_loss": true
 }
