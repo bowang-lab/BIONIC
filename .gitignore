@@ -5,3 +5,8 @@ src/utils/__pycache__/
 src/outputs/features/*
 src/outputs/models/*
 src/outputs/plots/*
+
+!.gitkeep
+!src/outputs/features/.gitkeep
+!src/outputs/models/.gitkeep
+!src/outputs/plots/.gitkeep
