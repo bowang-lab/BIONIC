@@ -47,7 +47,7 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
 
         $ python main.py -c gav_krog.json
 
-
+<!---
 ### TODO
 
 1. Download and install [Anaconda](https://www.anaconda.com/distribution/) for Python 3.x.
@@ -91,7 +91,7 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
 8. Ensure the `bionic` environment is active and test BIONIC is properly installed with
 
         $ python main.py -c gav_krog.json
-
+--->
 ## Usage
 
 ## Datasets
