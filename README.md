@@ -26,7 +26,10 @@ NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
 
 If you are on a Linux machine it's recommended to run BIONIC in a Docker container. 
 
-1. Download or copy the Dockerfile from `TODO`
+1. Copy or download the Dockerfile from [here](https://raw.githubusercontent.com/bowang-lab/BIONIC/master/Dockerfile) by running
+
+        $ wget https://raw.githubusercontent.com/bowang-lab/BIONIC/master/Dockerfile
+
 2. Build the BIONIC Docker image by running
 
         $ docker build -t "bionic" /path/to/Dockerfile
@@ -40,7 +43,9 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
 
         $ docker run -it --gpus all --ipc=host --network=host --volume=$PWD:/app -e NVIDIA_VISIBLE_DEVICES=0 "bionic" /bin/bash
 
-TODO
+5. Test BIONIC works by running the following inside the Docker container
+
+        $ python main.py -c gav_krog.json
 
 
 ### TODO
