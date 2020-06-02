@@ -302,7 +302,7 @@ def main(config, out_name=None):
     for batch_masks, idx in tqdm(zip(masks, index), desc="Forward pass"):
         batch_masks = batch_masks.reshape((1, -1))
         data_flows = [next(loader) for loader in loaders]
-        dot, emb, _, learned_weights = model(
+        dot, emb, _, learned_scales = model(
             datasets, data_flows, features, batch_masks, evaluate=True
         )
         emb_list.append(emb.detach().cpu().numpy())
@@ -315,11 +315,11 @@ def main(config, out_name=None):
         writer.add_embedding(emb, metadata=index)
 
     # Save internal learned network weights
-    if params.save_network_weights:
-        learned_weights = pd.DataFrame(
-            learned_weights.detach().cpu().numpy(), columns=params.names
+    if params.save_network_scales:
+        learned_scales = pd.DataFrame(
+            learned_scales.detach().cpu().numpy(), columns=params.names
         ).T
-        learned_weights.to_csv(
+        learned_scales.to_csv(
             f"./outputs/features/{params.out_name}_network_weights.csv", header=False
         )
 

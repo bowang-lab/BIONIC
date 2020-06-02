@@ -28,7 +28,7 @@ class ConfigParser:
             "epochs": 3000,  # Number of training epochs
             "batch_size": 2048,  # Number of genes/proteins in each batch
             "sample_size": 0,  # Number of networks to batch at once (0 will batch all networks) TODO
-            "learning_rate": 0.0004,  # Adam optimizer learning rate
+            "learning_rate": 0.0005,  # Adam optimizer learning rate
             "embedding_size": 512,  # Dimensionality of output integrated features
             "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD) TODO
             "initialization": "xavier",  # Method used to initialize BIONIC weights
@@ -37,7 +37,7 @@ class ConfigParser:
                 "n_heads": 10,  # Number of attention heads for each GAT layer
                 "n_layers": 2,  # Number of GAT layers for each input network
             },
-            "save_network_weights": False,  # Whether to save internal learned network weighting
+            "save_network_scales": False,  # Whether to save internal learned network feature scaling
             "save_model": True,  # Whether to save the trained model or not
             "load_pretrained_model": False,  # Whether to load a pretrained model TODO
             "use_tensorboard": False,  # Whether to output tensorboard data

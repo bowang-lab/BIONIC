@@ -11,7 +11,7 @@ class Interp(nn.Module):
         super(Interp, self).__init__()
 
         self.cuda = cuda
-        self.weights = nn.Parameter(
+        self.scales = nn.Parameter(
             (
                 torch.FloatTensor([1.0 for _ in range(n_modalities)]) / n_modalities
             ).reshape((1, -1))
@@ -19,8 +19,8 @@ class Interp(nn.Module):
 
     def forward(self, mask, idxs, evaluate=False):
 
-        weights = F.softmax(self.weights, dim=-1)
-        weights = weights[:, idxs]
+        scales = F.softmax(self.scales, dim=-1)
+        scales = scales[:, idxs]
 
         if evaluate:
             random_mask = torch.IntTensor(mask.shape).random_(1, 2).float().cuda()
@@ -39,7 +39,7 @@ class Interp(nn.Module):
         mask = mask * random_mask
         mask = F.softmax(mask + ((1 - mask) * -1e10), dim=-1)
 
-        return weights, mask
+        return scales, mask
 
 
 class Bionic(nn.Module):
@@ -130,7 +130,7 @@ class Bionic(nn.Module):
         else:
             idxs = list(range(self.n_modalities))
 
-        weights, interp_masks = self.interp(masks, idxs, evaluate)
+        scales, interp_masks = self.interp(masks, idxs, evaluate)
 
         # Define encoder logic.
         pre_cat_layers = []
@@ -173,7 +173,7 @@ class Bionic(nn.Module):
                 x = self.gat_layers[idx]((x, None), data.edge_index, vals, data.size)
 
             x = sum(x_store_layer) + x  # Compute tensor with residuals
-            x = weights[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
+            x = scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
             x_store_modality += x
 
         # Embedding
@@ -182,4 +182,4 @@ class Bionic(nn.Module):
         # Dot product.
         dot = torch.mm(emb, torch.t(emb))
 
-        return dot, emb, out_pre_cat_layers, weights
+        return dot, emb, out_pre_cat_layers, scales

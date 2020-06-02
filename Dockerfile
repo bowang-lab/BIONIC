@@ -39,3 +39,5 @@ RUN /bin/bash -c "source activate bionic \
     && pip install torch-sparse==0.4.0 --no-cache-dir \
     && pip install torch-scatter==1.2.0 --no-cache-dir \
     && pip install git+https://github.com/duncster94/pytorch_geometric.git@master#egg=torch-geometric"
+
+WORKDIR /BIONIC/src
