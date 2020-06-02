@@ -20,7 +20,7 @@ An overview of BIONIC can be seen below.
 BIONIC is implemented in [Python 3](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
 
 ## Installation
-NOTE: It is **highly** recommended to run BIONIC on an NVIDIA GPU.
+NOTE: Currently BIONIC requires an NVIDIA GPU to run.
 
 ### [Docker](https://www.docker.com/) (Recommended, Linux only)
 
