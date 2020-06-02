@@ -121,4 +121,29 @@ Argument | Default | Description
 
 By default, only the `names` key is required, though it is recommended you experiment with different hyperparameters so BIONIC suits your needs.
 
+### Network Files
+
+Input networks are text files in **edgelist** format, where each line consists of two gene identifiers and the weight of the edge between them, for example:
+
+```
+geneA geneB 0.8
+geneA geneC 0.75
+geneB geneD 1.0
+```
+
+These network files are stored in the `src/inputs` directory. The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
+BIONIC assumes all networks are undirected and enforces this in its preprocessing step.
+
+### Running BIONIC
+
+To run BIONIC, do
+
+    $ python main.py -c your_config_file.json
+
+Results will be saved in the `src/outputs` directory.
+
+### Usage Tips
+
+TODO
+
 ## Datasets
