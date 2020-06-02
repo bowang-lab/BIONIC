@@ -20,7 +20,7 @@ An overview of BIONIC can be seen below.
 BIONIC is implemented in [Python 3](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
 
 ## Installation
-NOTE: Currently BIONIC requires an NVIDIA GPU to run.
+**NOTE: Currently BIONIC requires an NVIDIA GPU to run.**
 
 ### [Docker](https://www.docker.com/) (Recommended, Linux only)
 
@@ -93,5 +93,32 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
         $ python main.py -c gav_krog.json
 --->
 ## Usage
+
+### Configuration File
+BIONIC runs by passing in a configuration file - a [JSON](https://www.w3schools.com/whatis/whatis_json.asp) file containing all the relevant model file paths and hyperparameters. You can have a uniquely named config file for each integration experiment you want to run. These config files are stored in the `src/config` directory where an example config file `gav_krog.json` is already present. `gav_krog.json` specifies the relevant parameters to integrate two, large-scale yeast protein-protein interaction networks - namely [Gavin et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16429126/) and [Krogan et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16554755/).
+
+The configuration keys are as follows:
+
+Argument | Default | Description
+--- | :---: | ---
+`names` | N/A | Filenames of input networks. These files should be stored in `src/inputs`. By specifying `"*"` BIONIC will integrate all networks in `src/inputs`.
+`out_name` | config file name | Name to prepend to all output files. If not specified it will be the name of the config file.
+`delimiter` | `" "` | Delimiter for input network files.
+`epochs` | `3000` | Number of training steps to run BIONIC for.
+`batch_size` | `2048` | Number of genes in each mini-batch. Higher numbers result in faster training but also higher memory usage.
+`sample_size` | `0` | Number of networks to batch over (`0` indicates **all** networks will be in each mini-batch). Higher numbers (or `0`) result in faster training but higher memory usage.
+`learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training. If the model loss suddenly increases by an order of magnitude or more at any point during training then you should lower the learning rate.
+`embedding_size` | `512` | Dimensionality of the learned integrated gene features. You will generally not need to increase this.
+`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `1024` or `2048` can be a useful way to speed up training and reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
+`initialization` | `"xavier"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
+`gat_shapes.dimension` | `64` | Dimensionality of each individual graph attention layer (GAT) head.
+`gat_shapes.n_heads` | `10` | Number of attention heads for each network-specific GAT.
+`gat_shapes.n_layers` | `2` | Number of times each network is passed through its corresponding GAT. This number corresponds to the effective neighbourhood size of the convolution.
+`save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
+`save_model` | `true` | Whether to save the trained model parameters and state.
+`use_tensorboard` | `false` | Whether to output training data and feature embeddings to Tensorboard. NOTE: Tensorboard is not included in the default installation and must be installed seperately.
+`plot_loss` | `true` | Whether to plot the model loss curves after training.
+
+By default, only the `names` key is required, though it is recommended you experiment with different hyperparameters so BIONIC suits your needs.
 
 ## Datasets
