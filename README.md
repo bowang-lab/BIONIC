@@ -144,6 +144,14 @@ Results will be saved in the `src/outputs` directory.
 
 ### Usage Tips
 
-TODO
+#### Hyperparameter Choice
+- `learning_rate` and `epochs` have the largest effect on training time and performance. 
+- `learning_rate` should generally be reduced as you integrate more networks. If the model loss increases by an order of magnitude or more during training, this is a sign `learning_rate` needs to be lowered.
+- `epochs` should be increased as you integrate more networks. 10000-15000 epochs is not unreasonable for 50+ networks.
+- The reconstruction loss may look like it's bottoming out early on but the model will continue improving feature quality for an unintuitively long time afterward.
+
+#### Input Networks
+- BIONIC performs best with sparser networks - any networks where every possible gene pair has a weighted edge should be sparsified.
 
 ## Datasets
+TODO
