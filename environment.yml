@@ -65,7 +65,6 @@ dependencies:
     - isodate==0.6.0
     - joblib==0.14.1
     - kiwisolver==1.2.0
-    - ld_impl_linux-64==2.34=h53a641e_0
     - llvmlite==0.32.0
     - matplotlib==3.2.1
     - networkx==2.4
