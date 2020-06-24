@@ -16,7 +16,6 @@ dependencies:
   - freetype=2.10.1=he06d7ca_0
   - intel-openmp=2020.0=166
   - jpeg=9c=h14c3975_1001
-  - ld_impl_linux-64=2.34=h53a641e_0
   - libblas=3.8.0=14_openblas
   - libcblas=3.8.0=14_openblas
   - libffi=3.2.1=he1b5a44_1007
@@ -66,6 +65,7 @@ dependencies:
     - isodate==0.6.0
     - joblib==0.14.1
     - kiwisolver==1.2.0
+    - ld_impl_linux-64=2.34=h53a641e_0
     - llvmlite==0.32.0
     - matplotlib==3.2.1
     - networkx==2.4
