@@ -84,7 +84,7 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
         $ conda env create -f environment.yml
           
     This will create an environment called `bionic` with all the required dependencies except for [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
-    **Ensure the `bionic` environment is active for the next step.**
+    **Ensure the** `bionic` **environment is active for the next step.**
 
 8. Install the required PyTorch Geometric dependencies
 
