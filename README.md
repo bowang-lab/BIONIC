@@ -69,7 +69,7 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
         $ export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib
     
     Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
-6. Clone this repository and navigate into the root directory:
+6. Clone this repository and navigate into the root directory
 
         $ git clone https://github.com/bowang-lab/BIONIC.git
         $ cd BIONIC
