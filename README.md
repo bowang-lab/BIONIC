@@ -1,4 +1,4 @@
-## Introduction
+## :boom: Introduction
 BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that extends the graph convolutional network (GCN) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in number of networks and network size.
 
 An overview of BIONIC can be seen below.
@@ -14,7 +14,7 @@ An overview of BIONIC can be seen below.
 
 BIONIC is implemented in [Python 3](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
 
-## Installation
+## :gear: Installation
 **NOTE: Currently BIONIC requires an NVIDIA GPU capable of supporting CUDA 10.0 to run.**
 
 **Preinstallation:** First, ensure the [drivers](https://www.nvidia.com/download/index.aspx?lang=en-us) for your GPU are up to date.
@@ -92,7 +92,7 @@ If you are on a Linux machine it's recommended to run BIONIC in a Docker contain
 
         $ python main.py -c gav_krog.json
 
-## Usage
+## :zap: Usage
 
 ### Configuration File
 BIONIC runs by passing in a configuration file - a [JSON](https://www.w3schools.com/whatis/whatis_json.asp) file containing all the relevant model file paths and hyperparameters. You can have a uniquely named config file for each integration experiment you want to run. These config files are stored in the `src/config` directory where an example config file `gav_krog.json` is already present. `gav_krog.json` specifies the relevant parameters to integrate two, large-scale yeast protein-protein interaction networks - namely [Gavin et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16429126/) and [Krogan et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16554755/).
@@ -144,7 +144,7 @@ Results will be saved in the `src/outputs` directory.
 
 ### Usage Tips
 
-The [configuration parameters table](#configuration-file) provides usage tips for most parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
+The [configuration parameters table](#configuration-file) provides usage tips for many parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
 
 #### Hyperparameter Choice
 - `learning_rate` and `epochs` have the largest effect on training time and performance. 
@@ -157,5 +157,5 @@ The [configuration parameters table](#configuration-file) provides usage tips fo
 #### Input Networks
 - BIONIC runs faster and performs better with sparser networks - as a general rule, try to keep the average node degree below 50 for each network.
 
-## Datasets
+## :file_folder: Datasets
 TODO
