@@ -123,7 +123,7 @@ By default, only the `names` key is required, though it is recommended you exper
 
 ### Network Files
 
-Input networks are text files in **edgelist** format, where each line consists of two gene identifiers and the weight of the edge between them, for example:
+Input networks are text files in **edgelist** format, where each line consists of two gene identifiers and (optionally) the weight of the edge between them, for example:
 
 ```
 geneA geneB 0.8
@@ -131,7 +131,7 @@ geneA geneC 0.75
 geneB geneD 1.0
 ```
 
-These network files are stored in the `src/inputs` directory. The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
+If the edge weight column is omitted, the network is considered binary (i.e. all edges will be given a weight of 1). These network files are stored in the `src/inputs` directory. The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
 BIONIC assumes all networks are undirected and enforces this in its preprocessing step.
 
 ### Running BIONIC
@@ -146,12 +146,12 @@ Results will be saved in the `src/outputs` directory.
 
 #### Hyperparameter Choice
 - `learning_rate` and `epochs` have the largest effect on training time and performance. 
-- `learning_rate` should generally be reduced as you integrate more networks. If the model loss increases by an order of magnitude or more during training, this is a sign `learning_rate` needs to be lowered.
+- `learning_rate` should generally be reduced as you integrate more networks. If the model loss suddenly increases by an order of magnitude or more at any point during training, this is a sign `learning_rate` needs to be lowered.
 - `epochs` should be increased as you integrate more networks. 10000-15000 epochs is not unreasonable for 50+ networks.
 - The reconstruction loss may look like it's bottoming out early on but the model will continue improving feature quality for an unintuitively long time afterward.
 
 #### Input Networks
-- BIONIC performs best with sparser networks - any networks where every possible gene pair has a weighted edge should be sparsified.
+- BIONIC runs faster and performs better with sparser networks - as a general rule, try to keep the average node degree below 50 for each network.
 
 ## Datasets
 TODO
