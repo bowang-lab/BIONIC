@@ -104,14 +104,14 @@ Argument | Default | Description
 `names` | N/A | Filenames of input networks. These files should be stored in `src/inputs`. By specifying `"*"` BIONIC will integrate all networks in `src/inputs`.
 `out_name` | config file name | Name to prepend to all output files. If not specified it will be the name of the config file.
 `delimiter` | `" "` | Delimiter for input network files.
-`epochs` | `3000` | Number of training steps to run BIONIC for.
+`epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](###usage-tips)).
 `batch_size` | `2048` | Number of genes in each mini-batch. Higher numbers result in faster training but also higher memory usage.
 `sample_size` | `0` | Number of networks to batch over (`0` indicates **all** networks will be in each mini-batch). Higher numbers (or `0`) result in faster training but higher memory usage.
-`learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training. If the model loss suddenly increases by an order of magnitude or more at any point during training then you should lower the learning rate.
-`embedding_size` | `512` | Dimensionality of the learned integrated gene features. You will generally not need to increase this.
+`learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](###usage-tips)).
+`embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](###usage-tips)).
 `svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `1024` or `2048` can be a useful way to speed up training and reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
 `initialization` | `"xavier"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
-`gat_shapes.dimension` | `64` | Dimensionality of each individual graph attention layer (GAT) head.
+`gat_shapes.dimension` | `64` | Dimensionality of each individual graph attention layer (GAT) head (see [**usage tips**](###usage-tips)).
 `gat_shapes.n_heads` | `10` | Number of attention heads for each network-specific GAT.
 `gat_shapes.n_layers` | `2` | Number of times each network is passed through its corresponding GAT. This number corresponds to the effective neighbourhood size of the convolution.
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
@@ -144,11 +144,15 @@ Results will be saved in the `src/outputs` directory.
 
 ### Usage Tips
 
+The [configuration parameters table](###configuration-file) provides usage tips for most parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
+
 #### Hyperparameter Choice
 - `learning_rate` and `epochs` have the largest effect on training time and performance. 
 - `learning_rate` should generally be reduced as you integrate more networks. If the model loss suddenly increases by an order of magnitude or more at any point during training, this is a sign `learning_rate` needs to be lowered.
 - `epochs` should be increased as you integrate more networks. 10000-15000 epochs is not unreasonable for 50+ networks.
 - The reconstruction loss may look like it's bottoming out early on but the model will continue improving feature quality for an unintuitively long time afterward.
+- `embedding_size` directly affects the quality of learned features. We found the default `512` works for most networks, though it's worth experimenting with different sizes for your application. In general, higher `embedding_size` will encode more information present in the input networks but at the risk of also encoding noise.
+- `gat_shapes.dimension` should be increased for networks with many nodes. We found `128` - `256` is a good size for human networks, for example.
 
 #### Input Networks
 - BIONIC runs faster and performs better with sparser networks - as a general rule, try to keep the average node degree below 50 for each network.
