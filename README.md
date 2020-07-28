@@ -104,14 +104,14 @@ Argument | Default | Description
 `names` | N/A | Filenames of input networks. These files should be stored in `src/inputs`. By specifying `"*"` BIONIC will integrate all networks in `src/inputs`.
 `out_name` | config file name | Name to prepend to all output files. If not specified it will be the name of the config file.
 `delimiter` | `" "` | Delimiter for input network files.
-`epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](###usage-tips)).
+`epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](#usage-tips)).
 `batch_size` | `2048` | Number of genes in each mini-batch. Higher numbers result in faster training but also higher memory usage.
 `sample_size` | `0` | Number of networks to batch over (`0` indicates **all** networks will be in each mini-batch). Higher numbers (or `0`) result in faster training but higher memory usage.
-`learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](###usage-tips)).
-`embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](###usage-tips)).
+`learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](#usage-tips)).
+`embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](#usage-tips)).
 `svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `1024` or `2048` can be a useful way to speed up training and reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
 `initialization` | `"xavier"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
-`gat_shapes.dimension` | `64` | Dimensionality of each individual graph attention layer (GAT) head (see [**usage tips**](###usage-tips)).
+`gat_shapes.dimension` | `64` | Dimensionality of each individual graph attention layer (GAT) head (see [**usage tips**](#usage-tips)).
 `gat_shapes.n_heads` | `10` | Number of attention heads for each network-specific GAT.
 `gat_shapes.n_layers` | `2` | Number of times each network is passed through its corresponding GAT. This number corresponds to the effective neighbourhood size of the convolution.
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
@@ -144,7 +144,7 @@ Results will be saved in the `src/outputs` directory.
 
 ### Usage Tips
 
-The [configuration parameters table](###configuration-file) provides usage tips for most parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
+The [configuration parameters table](#configuration-file) provides usage tips for most parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
 
 #### Hyperparameter Choice
 - `learning_rate` and `epochs` have the largest effect on training time and performance. 
