@@ -1,29 +1,18 @@
 import os
 import json
-import types
+from pathlib import Path
+from typing import Dict, Union
 from argparse import Namespace
 
 
-class ConfigParser:
-    def __init__(self, config, out_name=None):
+class DefaultConfig:
+    def __init__(self):
+        """Defines the default BIONIC config parameters.
+        """
 
-        # Check if the config is already loaded.
-        if isinstance(config, dict):
-            if "out_name" not in config:
-                if out_name is None:
-                    raise Exception("Output file name `out_name` must be provided if `config` is a dictionary")
-            else:
-                out_name = config["out_name"]
-        else:
-            if out_name is None:
-                out_name = config.replace(".json", "")
-            config = json.load(open("config/" + config, "r"))
-        self._config = config
-
-        # Default BIONIC parameter values
         self._defaults = {
             "names": None,  # Filenames of input networks
-            "out_name": out_name,  # Name of output feature, model and network weight files
+            "out_name": None,  # Name of output feature, model and network weight files
             "delimiter": " ",  # Delimiter for network input files
             "epochs": 3000,  # Number of training epochs
             "batch_size": 2048,  # Number of genes/proteins in each batch
@@ -44,39 +33,74 @@ class ConfigParser:
             "plot_loss": True,  # Whether to plot loss curves
         }
 
-        # Fields required in config file
-        self._required = {"names"}
+
+class ConfigParser(DefaultConfig):
+    def __init__(self, config: Union[str, dict], out_name: Union[str, None] = None):
+        """Parses and validates a user supplied config
+
+        Args:
+            config (Union[str, dict]): Name of config file or preloaded config
+                dictionary.
+            out_name (Union[str, None], optional): Name to use for BIONIC output files.
+                Inferred from config file name if None. Defaults to None.
+        """
+
+        super().__init__()
+        self._out_name = out_name
+        self._defaults["out_name"] = self._out_name
+        self._required = {"names"}  # Fields required in config file
+        self.config = config
 
     @property
     def config(self):
         return self._config
 
-    @property
-    def defaults(self):
-        return self._defaults
+    @config.setter
+    def config(self, config: Union[str, dict]) -> None:
 
-    @property
-    def required(self):
-        return self._required
+        # Check if the config is already loaded and validate `out_name` exists if so.
+        if isinstance(config, dict):
+            if "out_name" not in config:
+                if self._out_name is None:
+                    raise Exception(
+                        "Output file name `out_name` must be provided if `config` is a dictionary"
+                    )
+            else:
+                self._out_name = config["out_name"]
+        else:
+            if self._out_name is None:
+                self._out_name = config.replace(".json", "")
+            config = json.load(open("config/" + config, "r"))
+
+        # Validate required parameters are present in `config`
+        if len(self._required.intersection(set(config.keys()))) != len(self._required):
+            missing_params = "`, `".join(self._required - set(config.keys()))
+            raise Exception(
+                f"Required parameter(s) `{missing_params}` not found in provided config file."
+            )
+
+        self._config = config
 
     def _get_param(self, param, default):
-        if param in self._config:
+        if param in self.config:
             if param == "names" and self._config["names"] == "*":
                 return [
-                    f
-                    for f in os.listdir("inputs")
-                    if os.path.isfile(f"inputs/{f}")
+                    f for f in os.listdir("inputs") if os.path.isfile(f"inputs/{f}")
                 ]
-            return self._config[param]
+            return self.config[param]
         else:
-            if param in self._required:
-                raise Exception(
-                    f"{param} is a required parameter and was not found in the provided config file."
-                )
-
             return default
 
-    def parse(self):
+    def parse(self) -> Namespace:
+        """Parses config file.
+        
+        Overrides config defaults with user provided params and returns them
+        namespaced.
+
+        Returns:
+            Namespace: A Namespace object containing parsed BIONIC parameters.
+        """
+
         parsed_params = {
             param: self._get_param(param, default)
             for param, default in self._defaults.items()

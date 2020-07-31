@@ -21,14 +21,13 @@ class TestConfigParser:
     
     def test_out_name_equals_what_is_provided(self):
         cp = ConfigParser(mock_config, "out_name")
-        assert cp.defaults["out_name"] == "out_name"
+        assert cp._defaults["out_name"] == "out_name"
     
     def test_names_field_is_provided(self):
         mock_config_without_names = mock_config.copy()
         del mock_config_without_names["names"]
-        cp = ConfigParser(mock_config_without_names, "out_name")
         with pytest.raises(Exception):
-            cp.parse()
+            cp = ConfigParser(mock_config_without_names, "out_name")
 
     def test_asterisk_in_names_fetches_filenames(self):
         mock_config_asterisk_names = mock_config.copy()

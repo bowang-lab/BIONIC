@@ -12,14 +12,10 @@ from torch_geometric.utils import add_remaining_self_loops, is_undirected
 Preprocesses input networks
 """
 
+
 class Preprocessor:
     def __init__(
-        self,
-        file_names,
-        config_name,
-        delimiter=" ",
-        save_weights=False,
-        svd_dim=0,
+        self, file_names, config_name, delimiter=" ", save_weights=False, svd_dim=0,
     ):
 
         self.names = file_names
