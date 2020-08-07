@@ -3,7 +3,7 @@
     "Gavin.txt",
     "Krogan.txt"
   ],
-  "epochs": 2000,
+  "epochs": 5,
   "batch_size": 2048,
   "learning_rate": 0.0003,
   "gat_shapes": {

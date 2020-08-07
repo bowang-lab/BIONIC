@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import Sampler
 
+
 class StatefulSampler(Sampler):
     """A random sampler that ensures instances share the same permutation.
 
@@ -22,7 +23,7 @@ class StatefulSampler(Sampler):
 
     def __len__(self):
         return len(self.data_source)
-    
+
     @classmethod
     def step(cls, n_samples=None):
         if n_samples is None and cls.perm is None:

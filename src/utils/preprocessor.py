@@ -103,7 +103,7 @@ class Preprocessor:
         for G in tqdm(self.graphs, desc="Extending networks"):
             G.add_nodes_from(self.union)
             G.add_weighted_edges_from([(n, n, 1.0) for n in G.nodes()])
-        
+
         pyg_graphs = [from_networkx(G) for G in self.graphs]
         edge_indices = [G.edge_index for G in pyg_graphs]
         to_sparse_tensor = ToSparseTensor()

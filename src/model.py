@@ -171,8 +171,8 @@ class Bionic(nn.Module):
                     x = self.pre_gat_layers[net_idx](x)
 
                 if j != 0:
-                    x_store_layer = [x_s[:size[1]] for x_s in x_store_layer]
-                    x_pre = x[:size[1]]
+                    x_store_layer = [x_s[: size[1]] for x_s in x_store_layer]
+                    x_pre = x[: size[1]]
                     x_store_layer.append(x_pre)
 
                 # x = self.gat_layers[net_idx]((x, None), edge_index, vals, size)

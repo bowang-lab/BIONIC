@@ -38,9 +38,7 @@ def main(config, out_name=None):
 
     # Preprocess input networks.
     preprocessor = Preprocessor(
-        params.names,
-        delimiter=params.delimiter,
-        svd_dim=params.svd_dim,
+        params.names, delimiter=params.delimiter, svd_dim=params.svd_dim,
     )
     index, masks, weights, features, adj, edge_indices = preprocessor.process(cuda=cuda)
 
@@ -61,7 +59,7 @@ def main(config, out_name=None):
             sizes=[10] * params.gat_shapes["n_layers"],
             batch_size=params.batch_size,
             shuffle=False,
-            sampler=StatefulSampler(torch.arange(len(index)))
+            sampler=StatefulSampler(torch.arange(len(index))),
         )
         for edge_index in edge_indices
     ]
@@ -103,21 +101,11 @@ def main(config, out_name=None):
     def masked_weighted_mse(output, target, weight, node_ids, mask):
         """Custom loss.
         """
-        
+
+        # Subset target to current batch and make dense
         target = target.adj_t[node_ids, node_ids].to_dense()
 
-        # row, col, edge_attr = target.adj_t.t().coo()
-        # edge_index = torch.stack([row, col])
-
-        # sub_indices, sub_values = subgraph(
-        #     node_ids, edge_index, edge_attr=target.weight, relabel_nodes=True
-        # )
-        # target = (
-        #     torch.sparse.FloatTensor(sub_indices.cuda(), sub_values)
-        #     .coalesce()
-        #     .to_dense()
-        # )
-
+        # Masked and weighted MSE loss
         loss = weight * torch.mean(
             mask.reshape((-1, 1)) * torch.mean((output - target) ** 2, dim=-1) * mask
         )
@@ -155,8 +143,10 @@ def main(config, out_name=None):
         losses = [0.0 for _ in range(len(batch_loaders))]
 
         # Get the data flow for each input, stored in a tuple.
-        for batch_masks, node_ids, *data_flows in zip(mask_splits, int_splits, *batch_loaders):
-            
+        for batch_masks, node_ids, *data_flows in zip(
+            mask_splits, int_splits, *batch_loaders
+        ):
+
             # data_flows = [next(batch_loader) for batch_loader in batch_loaders]
 
             optimizer.zero_grad()
@@ -289,28 +279,27 @@ def main(config, out_name=None):
         torch.save(model.state_dict(), f"./outputs/models/{params.out_name}_model.pt")
 
     model.eval()
-    emb_list = []
 
     # Redefine dataloaders for each dataset for evaluation.
     loaders = [
         NeighborSampler(
-            data,
-            size=1.0,
-            num_hops=params.gat_shapes["n_layers"],
+            edge_index,
+            sizes=[-1] * params.gat_shapes["n_layers"],  # All neighbors
             batch_size=1,
             shuffle=False,
-            add_self_loops=True,
         )
-        for data in datasets
+        for edge_index in edge_indices
     ]
-    loaders = [loader(torch.arange(len(index))) for loader in loaders]
+
+    emb_list = []
 
     # Build embedding one node at a time
-    for batch_masks, idx in tqdm(zip(masks, index), desc="Forward pass"):
-        batch_masks = batch_masks.reshape((1, -1))
-        data_flows = [next(loader) for loader in loaders]
+    for mask, idx, *data_flows in tqdm(
+        zip(masks, index, *loaders), desc="forward pass"
+    ):
+        mask = mask.reshape((1, -1))
         dot, emb, _, learned_scales = model(
-            datasets, data_flows, features, batch_masks, evaluate=True
+            adj, data_flows, features, mask, evaluate=True
         )
         emb_list.append(emb.detach().cpu().numpy())
     emb = np.concatenate(emb_list)
