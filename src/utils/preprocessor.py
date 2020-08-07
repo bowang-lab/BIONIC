@@ -6,24 +6,20 @@ import numpy as np
 import networkx as nx
 from sklearn.decomposition import TruncatedSVD
 
-from torch_geometric.utils import add_remaining_self_loops, is_undirected
+from torch_geometric.transforms import ToSparseTensor
+from torch_geometric.utils import from_networkx, add_remaining_self_loops, is_undirected
 
 """
 Preprocesses input networks
 """
 
+
 class Preprocessor:
     def __init__(
-        self,
-        file_names,
-        config_name,
-        delimiter=" ",
-        save_weights=False,
-        svd_dim=0,
+        self, file_names, delimiter=" ", save_weights=False, svd_dim=0,
     ):
 
         self.names = file_names
-        self.config_name = config_name
         self.save_weights = save_weights
         self.svd_dim = svd_dim
         self.graphs = self._load(delimiter)
@@ -98,7 +94,7 @@ class Preprocessor:
 
         return feat
 
-    def _create_sparse_graphs(self):
+    def _create_pyg_graphs(self):
         """
         """
 
@@ -107,26 +103,14 @@ class Preprocessor:
         for G in tqdm(self.graphs, desc="Extending networks"):
             G.add_nodes_from(self.union)
             G.add_weighted_edges_from([(n, n, 1.0) for n in G.nodes()])
+        
+        pyg_graphs = [from_networkx(G) for G in self.graphs]
+        edge_indices = [G.edge_index for G in pyg_graphs]
+        to_sparse_tensor = ToSparseTensor()
+        for G in pyg_graphs:
+            to_sparse_tensor(G)
 
-        # Create sparse matrices from graphs.
-        coo_mats = [
-            np.abs(nx.to_scipy_sparse_matrix(G, nodelist=self.union, format="coo"))
-            for G in tqdm(self.graphs, desc="Creating sparse COO matrices")
-        ]
-
-        # Map COOrdinate sparse matrices to tensors.
-        coo_tensors = []
-        for mat in tqdm(coo_mats, desc="Creating sparse tensors"):
-            idx = torch.LongTensor(np.vstack((mat.row, mat.col)))
-            val = torch.FloatTensor(mat.data)
-            # Ensure each node has a self-loop.
-            idx, val = add_remaining_self_loops(idx, val)
-            assert is_undirected(idx)
-
-            coo_tensor = torch.sparse.FloatTensor(idx, val).coalesce()
-            coo_tensors.append(coo_tensor)
-
-        return coo_tensors
+        return pyg_graphs, edge_indices
 
     def process(self, cuda=False):
         """
@@ -134,7 +118,7 @@ class Preprocessor:
 
         masks = self._create_masks()
         weights = self._create_weights()
-        coo_tensors = self._create_sparse_graphs()
+        pyg_graphs, edge_indices = self._create_pyg_graphs()
         features = self._create_features()
 
         if cuda:
@@ -146,8 +130,8 @@ class Preprocessor:
                 features = [feature.to(device) for feature in features]
             else:
                 features = features.to(device)
-            coo_tensors = [t.to(device) for t in coo_tensors]
+            pyg_graphs = [t.to(device) for t in pyg_graphs]
 
         print(f"Preprocessing finished! {len(self.union)} total nodes.")
 
-        return self.union, masks, weights, features, coo_tensors
+        return self.union, masks, weights, features, pyg_graphs, edge_indices

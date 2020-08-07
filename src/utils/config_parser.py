@@ -11,7 +11,9 @@ class ConfigParser:
         if isinstance(config, dict):
             if "out_name" not in config:
                 if out_name is None:
-                    raise Exception("Output file name `out_name` must be provided if `config` is a dictionary")
+                    raise Exception(
+                        "Output file name `out_name` must be provided if `config` is a dictionary"
+                    )
             else:
                 out_name = config["out_name"]
         else:
@@ -63,9 +65,7 @@ class ConfigParser:
         if param in self._config:
             if param == "names" and self._config["names"] == "*":
                 return [
-                    f
-                    for f in os.listdir("inputs")
-                    if os.path.isfile(f"inputs/{f}")
+                    f for f in os.listdir("inputs") if os.path.isfile(f"inputs/{f}")
                 ]
             return self._config[param]
         else:

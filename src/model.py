@@ -138,39 +138,46 @@ class Bionic(nn.Module):
             []
         )  # Final layers before concatenation (no skip connections)
 
-        batch_size = data_flows[0].blocks[0].size[1]
+        batch_size = data_flows[0][0]
         x_store_modality = torch.zeros(
             (batch_size, self.integration_size)
         ).cuda()  # Tensor to store results from each modality.
 
+        # Iterate over input networks
         for i, (data_flow, dataset) in enumerate(zip(data_flows, datasets)):
-            idx = idxs[i]
+            net_idx = idxs[i]
 
-            data_flow = data_flow.to("cuda")
+            # data_flow = data_flow.to("cuda")
+
+            _, n_id, adjs = data_flow
+            adjs = [adj.to("cuda:0") for adj in adjs]
 
             x_store_layer = []
-            for j, data in enumerate(data_flow):
+            # Iterate over flow (pass data through GAT)
+            for j, (edge_index, e_id, size) in enumerate(adjs):
 
                 # Get edge weights.
-                vals = dataset.edge_attr[data.e_id]
+                # vals = dataset.edge_attr[e_id]
 
                 # Initial `x` is feature matrix.
                 if j == 0:
                     if bool(self.svd_dim):
-                        x = features[data.n_id].float()
+                        x = features[n_id].float()
 
                     else:
-                        x = torch.zeros(len(data.n_id), self.in_size).cuda()
-                        x[np.arange(len(data.n_id)), data.n_id] = 1.0
+                        x = torch.zeros(len(n_id), self.in_size).cuda()
+                        x[np.arange(len(n_id)), n_id] = 1.0
 
-                    x = self.pre_gat_layers[idx](x)
+                    x = self.pre_gat_layers[net_idx](x)
 
                 if j != 0:
-                    x_store_layer = [x_s[data.res_n_id] for x_s in x_store_layer]
-                    x_pre = x[data.res_n_id]
+                    x_store_layer = [x_s[:size[1]] for x_s in x_store_layer]
+                    x_pre = x[:size[1]]
                     x_store_layer.append(x_pre)
 
-                x = self.gat_layers[idx]((x, None), data.edge_index, vals, data.size)
+                # x = self.gat_layers[net_idx]((x, None), edge_index, vals, size)
+                x = self.gat_layers[net_idx]((x, None), edge_index, size)
+                x_store_layer.append(x)
 
             x = sum(x_store_layer) + x  # Compute tensor with residuals
             x = scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x

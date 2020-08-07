@@ -16,6 +16,7 @@ from model import Bionic
 from utils.config_parser import ConfigParser
 from utils.plotter import plot_losses
 from utils.preprocessor import Preprocessor
+from utils.sampler import StatefulSampler
 
 from torch_geometric.utils import subgraph
 from torch_geometric.data import Data, NeighborSampler
@@ -38,33 +39,31 @@ def main(config, out_name=None):
     # Preprocess input networks.
     preprocessor = Preprocessor(
         params.names,
-        params.out_name,
         delimiter=params.delimiter,
         svd_dim=params.svd_dim,
     )
-    index, masks, weights, features, adj = preprocessor.process(cuda=cuda)
+    index, masks, weights, features, adj, edge_indices = preprocessor.process(cuda=cuda)
 
     # Create pytorch geometric datasets.
-    datasets = [
-        Data(
-            edge_index=ad.indices().cpu(),
-            edge_attr=ad.values().reshape((-1, 1)).cuda(),
-            num_nodes=len(index),
-        )
-        for ad in adj
-    ]
+    # datasets = [
+    #     Data(
+    #         edge_index=ad.indices().cpu(),
+    #         edge_attr=ad.values().reshape((-1, 1)).cuda(),
+    #         num_nodes=len(index),
+    #     )
+    #     for ad in adj
+    # ]
 
     # Create dataloaders for each dataset.
     loaders = [
         NeighborSampler(
-            data,
-            size=0.4,
-            num_hops=params.gat_shapes["n_layers"],
+            edge_index,
+            sizes=[10] * params.gat_shapes["n_layers"],
             batch_size=params.batch_size,
             shuffle=False,
-            add_self_loops=True,
+            sampler=StatefulSampler(torch.arange(len(index)))
         )
-        for data in datasets
+        for edge_index in edge_indices
     ]
 
     # Create model.
@@ -72,7 +71,7 @@ def main(config, out_name=None):
         len(index),
         params.gat_shapes,
         params.embedding_size,
-        len(datasets),
+        len(adj),
         svd_dim=params.svd_dim,
     )
 
@@ -104,15 +103,21 @@ def main(config, out_name=None):
     def masked_weighted_mse(output, target, weight, node_ids, mask):
         """Custom loss.
         """
+        
+        target = target.adj_t[node_ids, node_ids].to_dense()
 
-        sub_indices, sub_values = subgraph(
-            node_ids, target.indices(), edge_attr=target.values(), relabel_nodes=True
-        )
-        target = (
-            torch.sparse.FloatTensor(sub_indices.cuda(), sub_values)
-            .coalesce()
-            .to_dense()
-        )
+        # row, col, edge_attr = target.adj_t.t().coo()
+        # edge_index = torch.stack([row, col])
+
+        # sub_indices, sub_values = subgraph(
+        #     node_ids, edge_index, edge_attr=target.weight, relabel_nodes=True
+        # )
+        # target = (
+        #     torch.sparse.FloatTensor(sub_indices.cuda(), sub_values)
+        #     .coalesce()
+        #     .to_dense()
+        # )
+
         loss = weight * torch.mean(
             mask.reshape((-1, 1)) * torch.mean((output - target) ** 2, dim=-1) * mask
         )
@@ -122,15 +127,16 @@ def main(config, out_name=None):
         """Defines training behaviour.
         """
 
+        StatefulSampler.step(len(index))
+
         # Get random integers for batch.
-        rand_int = torch.randperm(len(index))
+        rand_int = StatefulSampler.perm
         int_splits = torch.split(rand_int, params.batch_size)
         batch_features = features
 
         # Initialize loaders to current batch.
         if bool(params.sample_size):
-            rand_loaders = [loaders[i] for i in rand_net_idx]
-            batch_loaders = [l(rand_int) for l in rand_loaders]
+            batch_loaders = [loaders[i] for i in rand_net_idx]
             if isinstance(features, list):
                 batch_features = [features[i] for i in rand_net_idx]
 
@@ -140,7 +146,7 @@ def main(config, out_name=None):
             )
 
         else:
-            batch_loaders = [l(rand_int) for l in loaders]
+            batch_loaders = loaders
             mask_splits = torch.split(masks[rand_int], params.batch_size)
             if isinstance(features, list):
                 batch_features = features
@@ -149,12 +155,13 @@ def main(config, out_name=None):
         losses = [0.0 for _ in range(len(batch_loaders))]
 
         # Get the data flow for each input, stored in a tuple.
-        for batch_masks, node_ids in zip(mask_splits, int_splits):
-            data_flows = [next(batch_loader) for batch_loader in batch_loaders]
+        for batch_masks, node_ids, *data_flows in zip(mask_splits, int_splits, *batch_loaders):
+            
+            # data_flows = [next(batch_loader) for batch_loader in batch_loaders]
 
             optimizer.zero_grad()
             if bool(params.sample_size):
-                training_datasets = [datasets[i] for i in rand_net_idx]
+                training_datasets = [adj[i] for i in rand_net_idx]
                 output, _, _, _ = model(
                     training_datasets,
                     data_flows,
@@ -169,7 +176,7 @@ def main(config, out_name=None):
                     for j, i in enumerate(rand_net_idx)
                 ]
             else:
-                training_datasets = datasets
+                training_datasets = adj
                 output, _, _, _ = model(
                     training_datasets, data_flows, batch_features, batch_masks
                 )
