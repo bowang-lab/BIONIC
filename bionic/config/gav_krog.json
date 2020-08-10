@@ -1,0 +1,19 @@
+{
+  "names": [
+    "Gavin.txt",
+    "Krogan.txt"
+  ],
+  "epochs": 1000,
+  "batch_size": 2048,
+  "learning_rate": 0.0003,
+  "gat_shapes": {
+    "dimension": 64,
+    "n_heads": 10,
+    "n_layers": 2
+  },
+  "embedding_size": 256,
+  "save_model": false,
+
+  "use_tensorboard": false,
+  "plot_loss": true
+}

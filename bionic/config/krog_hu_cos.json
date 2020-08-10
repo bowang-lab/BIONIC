@@ -1,0 +1,17 @@
+{
+  "names": [
+    "krogan-nj-2006-ppi.txt",
+    "GSE4654_setA_family.pcl.net.txt",
+    "costanzo-m-2016-similarity-0.2.txt"
+  ],
+  "epochs": 5000,
+  "batch_size": 1024,
+  "learning_rate": 0.00065,
+  "gat_shapes": {
+    "dimension": 64,
+    "n_heads": 10,
+    "n_layers": 2
+  },
+  "embedding_size": 512,
+  "save_model": false
+}
