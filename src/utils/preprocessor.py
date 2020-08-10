@@ -105,12 +105,15 @@ class Preprocessor:
             G.add_weighted_edges_from([(n, n, 1.0) for n in G.nodes()])
 
         pyg_graphs = [from_networkx(G) for G in self.graphs]
-        edge_indices = [G.edge_index for G in pyg_graphs]
-        to_sparse_tensor = ToSparseTensor()
+        for G in pyg_graphs:
+            G.edge_weight = G.weight
+            del G.weight
+
+        to_sparse_tensor = ToSparseTensor(remove_edge_index=False)
         for G in pyg_graphs:
             to_sparse_tensor(G)
 
-        return pyg_graphs, edge_indices
+        return pyg_graphs
 
     def process(self, cuda=False):
         """
@@ -118,12 +121,11 @@ class Preprocessor:
 
         masks = self._create_masks()
         weights = self._create_weights()
-        pyg_graphs, edge_indices = self._create_pyg_graphs()
+        pyg_graphs = self._create_pyg_graphs()
         features = self._create_features()
 
         if cuda:
             device = torch.device("cuda")
-
             masks = masks.to(device)
             weights = weights.to(device)
             if isinstance(features, list):
@@ -134,4 +136,4 @@ class Preprocessor:
 
         print(f"Preprocessing finished! {len(self.union)} total nodes.")
 
-        return self.union, masks, weights, features, pyg_graphs, edge_indices
+        return self.union, masks, weights, features, pyg_graphs

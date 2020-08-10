@@ -16,10 +16,11 @@ from model import Bionic
 from utils.config_parser import ConfigParser
 from utils.plotter import plot_losses
 from utils.preprocessor import Preprocessor
-from utils.sampler import StatefulSampler
+from utils.sampler import StatefulSampler, NeighborSamplerWithWeights
 
 from torch_geometric.utils import subgraph
-from torch_geometric.data import Data, NeighborSampler
+from torch_geometric.data import Data
+
 
 
 def main(config, out_name=None):
@@ -40,31 +41,21 @@ def main(config, out_name=None):
     preprocessor = Preprocessor(
         params.names, delimiter=params.delimiter, svd_dim=params.svd_dim,
     )
-    index, masks, weights, features, adj, edge_indices = preprocessor.process(cuda=cuda)
+    index, masks, weights, features, adj = preprocessor.process(cuda=cuda)
 
-    # Create pytorch geometric datasets.
-    # datasets = [
-    #     Data(
-    #         edge_index=ad.indices().cpu(),
-    #         edge_attr=ad.values().reshape((-1, 1)).cuda(),
-    #         num_nodes=len(index),
-    #     )
-    #     for ad in adj
-    # ]
-
-    # Create dataloaders for each dataset.
+    # Create dataloaders for each dataset
     loaders = [
-        NeighborSampler(
-            edge_index,
+        NeighborSamplerWithWeights(
+            ad,
             sizes=[10] * params.gat_shapes["n_layers"],
             batch_size=params.batch_size,
             shuffle=False,
             sampler=StatefulSampler(torch.arange(len(index))),
         )
-        for edge_index in edge_indices
+        for ad in adj
     ]
 
-    # Create model.
+    # Create model
     model = Bionic(
         len(index),
         params.gat_shapes,
@@ -103,6 +94,7 @@ def main(config, out_name=None):
         """
 
         # Subset target to current batch and make dense
+        target = target.to("cuda:0")
         target = target.adj_t[node_ids, node_ids].to_dense()
 
         # Masked and weighted MSE loss
@@ -115,10 +107,8 @@ def main(config, out_name=None):
         """Defines training behaviour.
         """
 
-        StatefulSampler.step(len(index))
-
         # Get random integers for batch.
-        rand_int = StatefulSampler.perm
+        rand_int = StatefulSampler.step(len(index))
         int_splits = torch.split(rand_int, params.batch_size)
         batch_features = features
 
@@ -146,8 +136,6 @@ def main(config, out_name=None):
         for batch_masks, node_ids, *data_flows in zip(
             mask_splits, int_splits, *batch_loaders
         ):
-
-            # data_flows = [next(batch_loader) for batch_loader in batch_loaders]
 
             optimizer.zero_grad()
             if bool(params.sample_size):
@@ -264,7 +252,6 @@ def main(config, out_name=None):
         )
 
     # Begin inference
-    print("Forward pass...")
     model.load_state_dict(
         best_state["state_dict"]
     )  # Recover model with lowest reconstruction loss
@@ -280,22 +267,22 @@ def main(config, out_name=None):
 
     model.eval()
 
-    # Redefine dataloaders for each dataset for evaluation.
+    # Create new dataloaders for inference
     loaders = [
-        NeighborSampler(
-            edge_index,
+        NeighborSamplerWithWeights(
+            ad,
             sizes=[-1] * params.gat_shapes["n_layers"],  # All neighbors
             batch_size=1,
             shuffle=False,
         )
-        for edge_index in edge_indices
+        for ad in adj
     ]
 
     emb_list = []
 
     # Build embedding one node at a time
     for mask, idx, *data_flows in tqdm(
-        zip(masks, index, *loaders), desc="forward pass"
+        zip(masks, index, *loaders), desc="Forward pass"
     ):
         mask = mask.reshape((1, -1))
         dot, emb, _, learned_scales = model(
