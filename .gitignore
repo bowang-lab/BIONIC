@@ -5,6 +5,8 @@ src/utils/__pycache__/
 src/outputs/features/*
 src/outputs/models/*
 src/outputs/plots/*
+dist/
+bionic.egg-info/
 
 !.gitkeep
 !src/outputs/features/.gitkeep

@@ -70,7 +70,7 @@ class ConfigParser(DefaultConfig):
         else:
             if self._out_name is None:
                 self._out_name = config.replace(".json", "")
-            config = json.load(open("config/" + config, "r"))
+            config = json.load(open(config, "r"))
 
         # Validate required parameters are present in `config`
         if len(self._required.intersection(set(config.keys()))) != len(self._required):

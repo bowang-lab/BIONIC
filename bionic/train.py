@@ -3,7 +3,9 @@ import time
 import math
 import argparse
 from pathlib import Path
+from typing import Union
 
+import typer
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -13,16 +15,17 @@ import torch
 import torch.optim as optim
 import torch.multiprocessing
 
-from model import Bionic
-from utils.config_parser import ConfigParser
-from utils.plotter import plot_losses
-from utils.preprocessor import Preprocessor
+from .model import Bionic
+from .utils.config_parser import ConfigParser
+from .utils.plotter import plot_losses
+from .utils.preprocessor import Preprocessor
+from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
 
 from torch_geometric.utils import subgraph
-from torch_geometric.data import Data, NeighborSampler
+from torch_geometric.data import Data
 
 
-def main(config, out_name=None):
+def train(config: Union[str, dict], out_name: Union[str, None] = None):
     cuda = torch.cuda.is_available()
     print("Cuda available?", cuda)
 
@@ -38,42 +41,28 @@ def main(config, out_name=None):
 
     # Preprocess input networks.
     preprocessor = Preprocessor(
-        params.names,
-        params.out_name,
-        delimiter=params.delimiter,
-        svd_dim=params.svd_dim,
+        params.names, delimiter=params.delimiter, svd_dim=params.svd_dim,
     )
     index, masks, weights, features, adj = preprocessor.process(cuda=cuda)
 
-    # Create pytorch geometric datasets.
-    datasets = [
-        Data(
-            edge_index=ad.indices().cpu(),
-            edge_attr=ad.values().reshape((-1, 1)).cuda(),
-            num_nodes=len(index),
+    # Create dataloaders for each dataset
+    loaders = [
+        NeighborSamplerWithWeights(
+            ad,
+            sizes=[10] * params.gat_shapes["n_layers"],
+            batch_size=params.batch_size,
+            shuffle=False,
+            sampler=StatefulSampler(torch.arange(len(index))),
         )
         for ad in adj
     ]
 
-    # Create dataloaders for each dataset.
-    loaders = [
-        NeighborSampler(
-            data,
-            size=0.4,
-            num_hops=params.gat_shapes["n_layers"],
-            batch_size=params.batch_size,
-            shuffle=False,
-            add_self_loops=True,
-        )
-        for data in datasets
-    ]
-
-    # Create model.
+    # Create model
     model = Bionic(
         len(index),
         params.gat_shapes,
         params.embedding_size,
-        len(datasets),
+        len(adj),
         svd_dim=params.svd_dim,
     )
 
@@ -106,14 +95,11 @@ def main(config, out_name=None):
         """Custom loss.
         """
 
-        sub_indices, sub_values = subgraph(
-            node_ids, target.indices(), edge_attr=target.values(), relabel_nodes=True
-        )
-        target = (
-            torch.sparse.FloatTensor(sub_indices.cuda(), sub_values)
-            .coalesce()
-            .to_dense()
-        )
+        # Subset target to current batch and make dense
+        target = target.to("cuda:0")
+        target = target.adj_t[node_ids, node_ids].to_dense()
+
+        # Masked and weighted MSE loss
         loss = weight * torch.mean(
             mask.reshape((-1, 1)) * torch.mean((output - target) ** 2, dim=-1) * mask
         )
@@ -124,14 +110,13 @@ def main(config, out_name=None):
         """
 
         # Get random integers for batch.
-        rand_int = torch.randperm(len(index))
+        rand_int = StatefulSampler.step(len(index))
         int_splits = torch.split(rand_int, params.batch_size)
         batch_features = features
 
         # Initialize loaders to current batch.
         if bool(params.sample_size):
-            rand_loaders = [loaders[i] for i in rand_net_idx]
-            batch_loaders = [l(rand_int) for l in rand_loaders]
+            batch_loaders = [loaders[i] for i in rand_net_idx]
             if isinstance(features, list):
                 batch_features = [features[i] for i in rand_net_idx]
 
@@ -141,7 +126,7 @@ def main(config, out_name=None):
             )
 
         else:
-            batch_loaders = [l(rand_int) for l in loaders]
+            batch_loaders = loaders
             mask_splits = torch.split(masks[rand_int], params.batch_size)
             if isinstance(features, list):
                 batch_features = features
@@ -150,12 +135,13 @@ def main(config, out_name=None):
         losses = [0.0 for _ in range(len(batch_loaders))]
 
         # Get the data flow for each input, stored in a tuple.
-        for batch_masks, node_ids in zip(mask_splits, int_splits):
-            data_flows = [next(batch_loader) for batch_loader in batch_loaders]
+        for batch_masks, node_ids, *data_flows in zip(
+            mask_splits, int_splits, *batch_loaders
+        ):
 
             optimizer.zero_grad()
             if bool(params.sample_size):
-                training_datasets = [datasets[i] for i in rand_net_idx]
+                training_datasets = [adj[i] for i in rand_net_idx]
                 output, _, _, _ = model(
                     training_datasets,
                     data_flows,
@@ -170,7 +156,7 @@ def main(config, out_name=None):
                     for j, i in enumerate(rand_net_idx)
                 ]
             else:
-                training_datasets = datasets
+                training_datasets = adj
                 output, _, _, _ = model(
                     training_datasets, data_flows, batch_features, batch_masks
                 )
@@ -268,7 +254,6 @@ def main(config, out_name=None):
         )
 
     # Begin inference
-    print("Forward pass...")
     model.load_state_dict(
         best_state["state_dict"]
     )  # Recover model with lowest reconstruction loss
@@ -283,28 +268,27 @@ def main(config, out_name=None):
         torch.save(model.state_dict(), f"./outputs/models/{params.out_name}_model.pt")
 
     model.eval()
-    emb_list = []
 
-    # Redefine dataloaders for each dataset for evaluation.
+    # Create new dataloaders for inference
     loaders = [
-        NeighborSampler(
-            data,
-            size=1.0,
-            num_hops=params.gat_shapes["n_layers"],
+        NeighborSamplerWithWeights(
+            ad,
+            sizes=[-1] * params.gat_shapes["n_layers"],  # All neighbors
             batch_size=1,
             shuffle=False,
-            add_self_loops=True,
         )
-        for data in datasets
+        for ad in adj
     ]
-    loaders = [loader(torch.arange(len(index))) for loader in loaders]
+
+    emb_list = []
 
     # Build embedding one node at a time
-    for batch_masks, idx in tqdm(zip(masks, index), desc="Forward pass"):
-        batch_masks = batch_masks.reshape((1, -1))
-        data_flows = [next(loader) for loader in loaders]
+    for mask, idx, *data_flows in tqdm(
+        zip(masks, index, *loaders), desc="Forward pass"
+    ):
+        mask = mask.reshape((1, -1))
         dot, emb, _, learned_scales = model(
-            datasets, data_flows, features, batch_masks, evaluate=True
+            adj, data_flows, features, mask, evaluate=True
         )
         emb_list.append(emb.detach().cpu().numpy())
     emb = np.concatenate(emb_list)
@@ -328,18 +312,3 @@ def main(config, out_name=None):
     torch.cuda.empty_cache()
 
     print("Complete!")
-
-
-if __name__ == "__main__":
-    description = """Trains the BIONIC model and outputs integrated gene and protein features.
-    """
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        "-c", "--config", required=True, help="Name of config file", type=str
-    )
-    parser.add_argument(
-        "-o", "--out_name", help="Name of BIONIC output files", type=str
-    )
-    args = parser.parse_args()
-
-    main(args.config, args.out_name)
