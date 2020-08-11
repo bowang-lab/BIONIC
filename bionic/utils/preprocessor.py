@@ -1,3 +1,4 @@
+from pathlib import Path
 from functools import reduce
 
 from tqdm import tqdm
@@ -28,9 +29,7 @@ class Preprocessor:
         """
 
         graphs = [
-            nx.read_weighted_edgelist(
-                f"inputs/{name}", delimiter=delimiter
-            ).to_undirected()
+            nx.read_weighted_edgelist(name, delimiter=delimiter).to_undirected()
             for name in tqdm(self.names, desc="Loading networks")
         ]
 

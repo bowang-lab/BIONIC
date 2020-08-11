@@ -1,10 +1,11 @@
 {
   "names": [
-    "Costanzo.txt",
-    "Hu.txt",
-    "Krogan.txt"
+    "bionic/inputs/Costanzo.txt",
+    "bionic/inputs/Hu.txt",
+    "bionic/inputs/Krogan.txt"
   ],
-  "epochs": 5000,
+  "out_name": "bionic/outputs/costanzo_hu_krogan",
+  "epochs": 5,
   "batch_size": 1024,
   "learning_rate": 0.00065,
   "gat_shapes": {

@@ -3,7 +3,6 @@
     "path/to/network_1.txt",
     "path/to/network_2.txt"
   ],
-  "out_name": "path/to/out_name",
   "epochs": 10,
   "batch_size": 4096,
   "learning_rate": 0.0003,

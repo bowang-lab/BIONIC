@@ -3,7 +3,7 @@ import time
 import math
 import argparse
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import typer
 import numpy as np
@@ -25,12 +25,12 @@ from torch_geometric.utils import subgraph
 from torch_geometric.data import Data
 
 
-def train(config: Union[str, dict], out_name: Union[str, None] = None):
+def train(config: Union[Path, dict]) -> None:
     cuda = torch.cuda.is_available()
-    print("Cuda available?", cuda)
+    typer.echo("Using CUDA") if cuda else typer.echo("Using CPU")
 
     # Parse configuration and load into `params` namespace
-    cp = ConfigParser(config, out_name)
+    cp = ConfigParser(config)
     params = cp.parse()
 
     # Create `SummaryWriter` for tensorboard visualization
@@ -74,13 +74,16 @@ def train(config: Union[str, dict], out_name: Union[str, None] = None):
             elif params.initialization == "xavier":
                 torch.nn.init.xavier_uniform_(m.weight)
             else:
-                raise Exception("The initialization scheme provided is not supported.")
+                raise ValueError(
+                    f"The initialization scheme {params.initialization} \
+                    provided is not supported"
+                )
 
     model.apply(init_weights)
 
     # Load pretrained model
     if params.load_pretrained_model:
-        print("Loading pretrained model...")
+        typer.echo("Loading pretrained model...")
         model.load_state_dict(torch.load(f"models/{params.out_name}_model.pt"))
 
     # Push model to cuda device, if available.
@@ -208,16 +211,12 @@ def train(config: Union[str, dict], out_name: Union[str, None] = None):
             ]
 
         # Print training progress.
-        print(
-            f"Epoch: {epoch + 1} |",
-            "Loss Total: {:.6f} |".format(sum(epoch_losses)),
-            end=" ",
-            flush=True,
-        )
+        progress_string = f"Epoch: {epoch + 1} | Loss Total: {sum(epoch_losses):.6f} |"
         if len(adj) <= 10:
             for i, loss in enumerate(epoch_losses):
-                print("Loss {}: {:.6f} |".format(i + 1, loss), end=" ", flush=True)
-        print("Time: {:.4f}s".format(time.time() - t), flush=True)
+                progress_string += f" Loss {i + 1}: {loss:.6f} |"
+        progress_string += f"Time: {time.time() - t:.4f}"
+        typer.echo(progress_string)
 
         # Add loss data to tensorboard visualization
         if params.use_tensorboard:
@@ -247,25 +246,16 @@ def train(config: Union[str, dict], out_name: Union[str, None] = None):
     if params.use_tensorboard:
         writer.close()
 
-    # Output loss plot
-    if params.plot_loss:
-        plot_losses(
-            train_loss, params.names, f"./outputs/plots/{params.out_name}_loss.png"
-        )
-
     # Begin inference
     model.load_state_dict(
         best_state["state_dict"]
     )  # Recover model with lowest reconstruction loss
-    print(
-        f'Loaded best model from epoch {best_state["epoch"]} '
-        + f'with loss {best_state["best_loss"]}.'
+    typer.echo(
+        (
+            f"Loaded best model from epoch {best_state['epoch']} "
+            f"with loss {best_state['best_loss']}"
+        )
     )
-
-    # Save model
-    if params.save_model:
-        print("Saving model...")
-        torch.save(model.state_dict(), f"./outputs/models/{params.out_name}_model.pt")
 
     model.eval()
 
@@ -293,22 +283,37 @@ def train(config: Union[str, dict], out_name: Union[str, None] = None):
         emb_list.append(emb.detach().cpu().numpy())
     emb = np.concatenate(emb_list)
     emb_df = pd.DataFrame(emb, index=index)
-    emb_df.to_csv(f"./outputs/features/{params.out_name}_features.csv")
+    emb_df.to_csv(extend_path(params.out_name, "_features.tsv"), sep="\t")
+
+    # Free memory (necessary for sequential runs)
+    torch.cuda.empty_cache()
 
     # Create visualization of integrated features using tensorboard projector
     if params.use_tensorboard:
         writer.add_embedding(emb, metadata=index)
 
-    # Save internal learned network weights
+    # Output loss plot
+    if params.plot_loss:
+        typer.echo("Plotting loss...")
+        plot_losses(train_loss, params.names, extend_path(params.out_name, "_loss.png"))
+
+    # Save model
+    if params.save_model:
+        typer.echo("Saving model...")
+        torch.save(model.state_dict(), extend_path(params.out_name, "_model.pt"))
+
+    # Save internal learned network scales
     if params.save_network_scales:
+        typer.echo("Saving network scales...")
         learned_scales = pd.DataFrame(
             learned_scales.detach().cpu().numpy(), columns=params.names
         ).T
         learned_scales.to_csv(
-            f"./outputs/features/{params.out_name}_network_weights.csv", header=False
+            extend_path(params.out_name, "_network_weights.tsv"), header=False, sep="\t"
         )
 
-    # Free memory (necessary for sequential runs)
-    torch.cuda.empty_cache()
+    typer.echo("Complete!")
 
-    print("Complete!")
+
+def extend_path(path: Path, extension: str):
+    return path.parent / (path.stem + extension)
