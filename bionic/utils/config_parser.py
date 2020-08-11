@@ -19,7 +19,7 @@ class ConfigParser:
         else:
             if out_name is None:
                 out_name = config.replace(".json", "")
-            config = json.load(open("config/" + config, "r"))
+            config = json.load(open(config, "r"))
         self._config = config
 
         # Default BIONIC parameter values

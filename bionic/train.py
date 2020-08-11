@@ -1,8 +1,9 @@
 import os
 import time
 import math
-import argparse
+from typing import Union
 
+import typer
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -22,7 +23,7 @@ from torch_geometric.utils import subgraph
 from torch_geometric.data import Data
 
 
-def main(config, out_name=None):
+def train(config: Union[str, dict], out_name: Union[str, None] = None):
     cuda = torch.cuda.is_available()
     print("Cuda available?", cuda)
 
@@ -309,18 +310,3 @@ def main(config, out_name=None):
     torch.cuda.empty_cache()
 
     print("Complete!")
-
-
-if __name__ == "__main__":
-    description = """Trains the BIONIC model and outputs integrated gene and protein features.
-    """
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        "-c", "--config", required=True, help="Name of config file", type=str
-    )
-    parser.add_argument(
-        "-o", "--out_name", help="Name of BIONIC output files", type=str
-    )
-    args = parser.parse_args()
-
-    main(args.config, args.out_name)

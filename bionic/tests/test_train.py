@@ -4,11 +4,11 @@
 # sys.path.append(f"{pathlib.Path(__file__).parent.parent.absolute()}/")
 
 import pytest
-from bionic.main import main
+from bionic.train import train
 
 base_config = {}
 
 
-class TestMain:
+class TestTrain:
     def test_test(self):
         assert True
