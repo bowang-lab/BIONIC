@@ -1,10 +1,8 @@
 torch-geometric/
 .vscode/
 __pycache__/
-src/utils/__pycache__/
-src/outputs/features/*
-src/outputs/models/*
-src/outputs/plots/*
+bionic/utils/__pycache__/
+bionic/outputs/*
 dist/
 bionic.egg-info/
 

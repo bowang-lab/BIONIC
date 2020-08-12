@@ -28,13 +28,16 @@ class StatefulSampler(Sampler):
         return len(self.data_source)
 
     @classmethod
-    def step(cls, n_samples=None):
+    def step(cls, n_samples=None, random=True):
         if n_samples is None and cls.perm is None:
             raise Exception("`n_samples` must be passed on first call to `step`.")
         elif n_samples is None:
             cls.perm = torch.randperm(len(cls.perm))
         else:
             cls.perm = torch.randperm(n_samples)
+
+        if not random:
+            cls.perm = torch.arange(len(cls.perm))
         return cls.perm
 
 

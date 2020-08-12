@@ -69,17 +69,17 @@ class Preprocessor:
 
         if bool(self.svd_dim):
 
-            all_edges = [e for net in self.graphs for e in list(net.edges())]
+            all_edges = [e for G in self.graphs for e in list(G.edges())]
             G_max = nx.Graph()
             G_max.add_edges_from(all_edges)
             for e in G_max.edges():
                 weights = []
-                for net in self.graphs:
-                    if e in net.edges():
-                        if "weight" not in net.edges()[e]:
+                for G in self.graphs:
+                    if e in G.edges():
+                        if "weight" not in G.edges()[e]:
                             weights.append(1.0)
                         else:
-                            weights.append(net.edges()[e]["weight"])
+                            weights.append(G.edges()[e]["weight"])
                 max_weight = max(weights)
                 G_max.edges()[e]["weight"] = max_weight
 
@@ -103,9 +103,16 @@ class Preprocessor:
 
         # Extend all graphs with nodes in `self.union` and add self-loops
         # to all nodes.
-        for G in tqdm(self.graphs, desc="Extending networks"):
-            G.add_nodes_from(self.union)
-            G.add_weighted_edges_from([(n, n, 1.0) for n in G.nodes()])
+        new_graphs = [nx.Graph() for _ in self.graphs]
+        for G, nG in zip(self.graphs, new_graphs):
+            nG.add_nodes_from(self.union)
+            nG.add_weighted_edges_from(
+                [(s, t, weight["weight"]) for (s, t, weight) in G.edges(data=True)]
+            )
+            nG.add_weighted_edges_from([(n, n, 1.0) for n in nG.nodes()])
+        self.graphs = new_graphs
+
+        # print((np.array(new_graphs[0].nodes()) == np.array(new_graphs[1].nodes())).all())
 
         pyg_graphs = [from_networkx(G) for G in self.graphs]
         for G in pyg_graphs:
@@ -124,8 +131,8 @@ class Preprocessor:
 
         masks = self._create_masks()
         weights = self._create_weights()
-        pyg_graphs = self._create_pyg_graphs()
         features = self._create_features()
+        pyg_graphs = self._create_pyg_graphs()
 
         if cuda:
             device = torch.device("cuda")

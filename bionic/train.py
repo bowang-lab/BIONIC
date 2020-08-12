@@ -108,7 +108,7 @@ def train(config: Union[Path, dict]) -> None:
         )
         return loss
 
-    def train(rand_net_idx=None):
+    def train_step(rand_net_idx=None):
         """Defines training behaviour.
         """
 
@@ -198,12 +198,12 @@ def train(config: Union[Path, dict]) -> None:
                 rand_net_idxs, math.floor(len(adj) / params.sample_size)
             )
             for rand_idxs in idx_split:
-                _, losses = train(rand_idxs)
+                _, losses = train_step(rand_idxs)
                 for idx, loss in zip(rand_idxs, losses):
                     epoch_losses[idx] += loss
 
         else:
-            _, losses = train()
+            _, losses = train_step()
 
             epoch_losses = [
                 ep_loss + b_loss.item() / (len(index) / params.batch_size)
@@ -253,7 +253,7 @@ def train(config: Union[Path, dict]) -> None:
     typer.echo(
         (
             f"Loaded best model from epoch {best_state['epoch']} "
-            f"with loss {best_state['best_loss']}"
+            f"with loss {best_state['best_loss']:.6f}"
         )
     )
 
@@ -266,10 +266,11 @@ def train(config: Union[Path, dict]) -> None:
             sizes=[-1] * params.gat_shapes["n_layers"],  # All neighbors
             batch_size=1,
             shuffle=False,
+            sampler=StatefulSampler(torch.arange(len(index))),
         )
         for ad in adj
     ]
-
+    StatefulSampler.step(len(index), random=False)
     emb_list = []
 
     # Build embedding one node at a time
@@ -283,7 +284,8 @@ def train(config: Union[Path, dict]) -> None:
         emb_list.append(emb.detach().cpu().numpy())
     emb = np.concatenate(emb_list)
     emb_df = pd.DataFrame(emb, index=index)
-    emb_df.to_csv(extend_path(params.out_name, "_features.tsv"), sep="\t")
+    # emb_df.to_csv(extend_path(params.out_name, "_features.tsv"), sep="\t")
+    emb_df.to_csv(extend_path(params.out_name, "_features.csv"))
 
     # Free memory (necessary for sequential runs)
     torch.cuda.empty_cache()

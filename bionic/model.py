@@ -115,7 +115,10 @@ class Bionic(nn.Module):
             net_idx = idxs[i]
 
             _, n_id, adjs = data_flow
-            adjs = [adj.to("cuda:0") for adj in adjs]
+            if isinstance(adjs, list):
+                adjs = [adj.to("cuda:0") for adj in adjs]
+            else:
+                adjs = [adjs.to("cuda:0")]
 
             x_store_layer = []
             # Iterate over flow (pass data through GAT)
