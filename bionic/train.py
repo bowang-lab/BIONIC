@@ -1,15 +1,12 @@
-import os
 import time
 import math
-import argparse
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import typer
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 import torch
 import torch.optim as optim
@@ -20,9 +17,6 @@ from .utils.config_parser import ConfigParser
 from .utils.plotter import plot_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
-
-from torch_geometric.utils import subgraph
-from torch_geometric.data import Data
 
 
 def train(config: Union[Path, dict]) -> None:

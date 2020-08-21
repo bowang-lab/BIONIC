@@ -7,7 +7,7 @@ from torch_scatter import scatter, segment_csr, gather_csr
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 from torch_geometric.nn import GATConv
 
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from torch_geometric.typing import OptTensor, OptPairTensor, Adj, Size
 
 
@@ -18,20 +18,8 @@ def weighted_softmax(
     ptr: Optional[Tensor] = None,
     num_nodes: Optional[int] = None,
 ) -> Tensor:
-    r"""Computes a sparsely evaluated softmax.
-    Given a value tensor :attr:`src`, this function first groups the values
-    along the first dimension based on the indices specified in :attr:`index`,
-    and then proceeds to compute the softmax individually for each group.
-
-    Args:
-        src (Tensor): The source tensor.
-        index (LongTensor): The indices of elements for applying the softmax.
-        ptr (LongTensor, optional): If given, computes the softmax based on
-            sorted inputs in CSR representation. (default: :obj:`None`)
-        num_nodes (int, optional): The number of nodes, *i.e.*
-            :obj:`max_val + 1` of :attr:`index`. (default: :obj:`None`)
-
-    :rtype: :class:`Tensor`
+    """Extends the PyTorch Geometric `softmax` functionality to
+    incorporate edge weights.
     """
 
     if ptr is None:
@@ -49,6 +37,9 @@ def weighted_softmax(
 
 
 class WGATConv(GATConv):
+    """Weighted version of the Graph Attention Network (`GATConv`).
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -81,6 +72,13 @@ class WGATConv(GATConv):
 
 
 class Interp(nn.Module):
+    """Stochastic summation layer.
+
+    Performs random node feature dropout and feature scaling.
+    NOTE: This is not very nice, but it is differentiable. Future work
+    should involve rewriting this.
+    """
+
     def __init__(self, n_modalities, cuda=True):
         super(Interp, self).__init__()
 
@@ -91,7 +89,9 @@ class Interp(nn.Module):
             ).reshape((1, -1))
         )
 
-    def forward(self, mask, idxs, evaluate=False):
+    def forward(
+        self, mask: Tensor, idxs: Tensor, evaluate: bool = False
+    ) -> Tuple[Tensor, Tensor]:
 
         scales = F.softmax(self.scales, dim=-1)
         scales = scales[:, idxs]

@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Dict
+
 # from torch_geometric.nn import GATConv
 from .layers import WGATConv, Interp
 
@@ -11,29 +13,22 @@ from .layers import WGATConv, Interp
 class Bionic(nn.Module):
     def __init__(
         self,
-        in_size,
-        gat_shapes,
-        emb_size,
-        n_modalities,
-        alpha=0.1,
-        dropout=0.0,
-        svd_dim=0,
+        in_size: int,
+        gat_shapes: Dict[str, int],
+        emb_size: int,
+        n_modalities: int,
+        alpha: float = 0.1,
+        svd_dim: int = 0,
     ):
-        """
-        The BIONIC model.
+        """The BIONIC model.
 
-            in_size: int, the size of the input networks (assumed to be the same
-                size, missing observations should extend the input networks with
-                disconnected nodes).
-
-            gat_shapes: list of list of tuple, each tuple contains the layer
-                size and number of attention heads, each list contains these
-                shapes for each modality.
-                i.e. [[(128, 4), (128, 4)], [(64, 2), (64, 2), (64, 1)], ...]
-
-            emb_size: int, dimension of the shared embedding (bottleneck)
-
-            alpha: float, LeakyReLU negative component slope.
+        Args:
+            in_size (int): Number of nodes in input networks.
+            gat_shapes (Dict[str, int]): Graph attention layer hyperparameters.
+            emb_size (int): Dimension of learned node features.
+            n_modalities (int): Number of input networks.
+            alpha (float, optional): LeakyReLU negative slope. Defaults to 0.1.
+            svd_dim (int, optional): Dimension of input node feature SVD approximation. Defaults to 0.
         """
 
         super(Bionic, self).__init__()
@@ -41,7 +36,6 @@ class Bionic(nn.Module):
         self.in_size = in_size
         self.emb_size = emb_size
         self.alpha = alpha
-        self.dropout = dropout
         self.n_modalities = n_modalities
         self.svd_dim = svd_dim
         self.adj_dense_layers = []
@@ -49,9 +43,9 @@ class Bionic(nn.Module):
         self.gat_layers = []
         self.post_gat_layers = []  # Dense transform after each GAT encoder.
 
-        self.dimension = gat_shapes["dimension"]
-        self.n_heads = gat_shapes["n_heads"]
-        self.n_layers = gat_shapes["n_layers"]
+        self.dimension: int = gat_shapes["dimension"]
+        self.n_heads: int = gat_shapes["n_heads"]
+        self.n_layers: int = gat_shapes["n_layers"]
 
         # GAT
         for i in range(self.n_modalities):
@@ -68,7 +62,7 @@ class Bionic(nn.Module):
                     self.dimension * self.n_heads,
                     self.dimension,
                     heads=self.n_heads,
-                    dropout=self.dropout,
+                    dropout=0,
                     add_self_loops=False,
                 )
             )

@@ -5,9 +5,9 @@
     "bionic/inputs/Krogan.txt"
   ],
   "out_name": "bionic/outputs/costanzo_hu_krogan",
-  "epochs": 4000,
-  "batch_size": 2048,
-  "learning_rate": 0.001,
+  "epochs": 5000,
+  "batch_size": 1024,
+  "learning_rate": 0.0005,
   "gat_shapes": {
     "dimension": 64,
     "n_heads": 10,
