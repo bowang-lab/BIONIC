@@ -54,9 +54,31 @@ colorama = "^0.4.3"
 black = "^19.10b0"
 ipython = "^7.17.0"
 pre-commit = "^2.6.0"
+flake8 = "^3.8.3"
 
 [tool.poetry.scripts]
 bionic = "bionic.cli:main"
+
+[tool.black]
+line-length = 100
+
+include = '\.pyi?$'
+
+exclude = '''
+(
+      __pycache__
+    | \btutorials\b
+    | \bbuild\b
+    | \.git
+    | \.mypy_cache
+    | \.pytest_cache
+    | \.vscode
+    | \.venv
+    | \bdist\b
+    | \bdoc\b
+)
+'''
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"

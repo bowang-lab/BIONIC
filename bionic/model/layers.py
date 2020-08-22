@@ -3,12 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch import Tensor
-from torch_scatter import scatter, segment_csr, gather_csr
+from torch_scatter import scatter
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 from torch_geometric.nn import GATConv
 
-from typing import Optional, Union, Tuple
-from torch_geometric.typing import OptTensor, OptPairTensor, Adj, Size
+from typing import Optional, Tuple
+from torch_geometric.typing import OptTensor
 
 
 def weighted_softmax(
@@ -25,15 +25,11 @@ def weighted_softmax(
     if ptr is None:
         N = maybe_num_nodes(index, num_nodes)
         out = src - scatter(src, index, dim=0, dim_size=N, reduce="max")[index]
-        out = (
-            edge_weights.unsqueeze(-1) * out.exp()
-        )  # multiply softmax by `edge_weights`
+        out = edge_weights.unsqueeze(-1) * out.exp()  # multiply softmax by `edge_weights`
         out_sum = scatter(out, index, dim=0, dim_size=N, reduce="sum")[index]
         return out / (out_sum + 1e-16)
     else:
-        raise NotImplementedError(
-            "Using `ptr` with `weighted_softmax` has not been implemented."
-        )
+        raise NotImplementedError("Using `ptr` with `weighted_softmax` has not been implemented.")
 
 
 class WGATConv(GATConv):
@@ -47,7 +43,7 @@ class WGATConv(GATConv):
         """Extends the `GATConv` forward function to include edge weights.
 
         The `edge_weights` variable is made an instance attribute so it can
-        easily be accessed in the `message` method and then passed to 
+        easily be accessed in the `message` method and then passed to
         `weighted_softmax`.
         """
 
@@ -84,14 +80,10 @@ class Interp(nn.Module):
 
         self.cuda = cuda
         self.scales = nn.Parameter(
-            (
-                torch.FloatTensor([1.0 for _ in range(n_modalities)]) / n_modalities
-            ).reshape((1, -1))
+            (torch.FloatTensor([1.0 for _ in range(n_modalities)]) / n_modalities).reshape((1, -1))
         )
 
-    def forward(
-        self, mask: Tensor, idxs: Tensor, evaluate: bool = False
-    ) -> Tuple[Tensor, Tensor]:
+    def forward(self, mask: Tensor, idxs: Tensor, evaluate: bool = False) -> Tuple[Tensor, Tensor]:
 
         scales = F.softmax(self.scales, dim=-1)
         scales = scales[:, idxs]

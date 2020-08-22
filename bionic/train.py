@@ -12,12 +12,117 @@ import torch
 import torch.optim as optim
 import torch.multiprocessing
 
-from .model import Bionic
 from .utils.config_parser import ConfigParser
 from .utils.plotter import plot_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
+from .model.model import Bionic
+from .model.loss import masked_scaled_mse
 
+
+class Trainer:
+
+    cuda = torch.cuda.is_available()
+    typer.echo("Using CUDA") if Trainer.cuda else typer.echo("Using CPU")
+
+    def __init__(self, config: Union[Path, dict]):
+        self.params = self._parse_config(
+            config
+        )  # parse configuration and load into `params` namespace
+        self.writer = (
+            self._init_tensorboard()
+        )  # create `SummaryWriter` for tensorboard visualization
+        self.index, self.masks, self.weights, self.features, self.adj = self._preprocess_inputs()
+        self.train_loaders = self._make_train_loaders()
+        self.inference_loaders = self._make_inference_loaders()
+        self.model, self.optimizer = self._init_model()
+
+    def _parse_config(self, config):
+        cp = ConfigParser(config)
+        return cp.parse()
+
+    def _init_tensorboard(self):
+        if self.params.use_tensorboard:
+            from torch.utils.tensorboard import SummaryWriter
+
+            return SummaryWriter(flush_secs=10)
+        return None
+
+    def _preprocess_inputs(self):
+        preprocessor = Preprocessor(
+            self.params.names, delimiter=self.params.delimiter, svd_dim=self.params.svd_dim,
+        )
+        return preprocessor.process(cuda=Trainer.cuda)
+
+    def _make_train_loaders(self):
+        return [
+            NeighborSamplerWithWeights(
+                ad,
+                sizes=[10] * self.params.gat_shapes["n_layers"],
+                batch_size=self.params.batch_size,
+                shuffle=False,
+                sampler=StatefulSampler(torch.arange(len(self.index))),
+            )
+            for ad in self.adj
+        ]
+
+    def _make_inference_loaders(self):
+        return [
+            NeighborSamplerWithWeights(
+                ad,
+                sizes=[-1] * self.params.gat_shapes["n_layers"],  # all neighbors
+                batch_size=1,
+                shuffle=False,
+                sampler=StatefulSampler(torch.arange(len(self.index))),
+            )
+            for ad in self.adj
+        ]
+
+    def _init_model(self):
+        model = Bionic(
+            len(self.index),
+            self.params.gat_shapes,
+            self.params.embedding_size,
+            len(self.adj),
+            svd_dim=self.params.svd_dim,
+        )
+        model.apply(self._init_model_weights)
+
+        # Load pretrained model
+        # TODO: refactor this
+        if self.params.load_pretrained_model:
+            typer.echo("Loading pretrained model...")
+            model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
+
+        # Push model to cuda device, if available
+        if Trainer.cuda:
+            model.cuda()
+
+        optimizer = optim.Adam(model.parameters(), lr=self.params.learning_rate, weight_decay=0.0)
+
+        return model, optimizer
+
+    def _init_model_weights(self, model):
+        if hasattr(model, "weight"):
+            if self.params.initialization == "kaiming":
+                torch.nn.init.kaiming_uniform_(model.weight, a=0.1)
+            elif self.params.initialization == "xavier":
+                torch.nn.init.xavier_uniform_(model.weight)
+            else:
+                raise ValueError(
+                    f"The initialization scheme {self.params.initialization} \
+                    provided is not supported"
+                )
+
+    def train(self, **kwargs):
+        """Trains BIONIC model.
+
+        Keyword arguments matching those found in `self.params` (i.e. the config arguments)
+        can be passed here to overwrite the corresponding `self.params` arguments.
+        """
+
+        
+        pass
 
 def train(config: Union[Path, dict]) -> None:
     cuda = torch.cuda.is_available()
@@ -34,9 +139,7 @@ def train(config: Union[Path, dict]) -> None:
         writer = SummaryWriter(flush_secs=10)
 
     # Preprocess input networks.
-    preprocessor = Preprocessor(
-        params.names, delimiter=params.delimiter, svd_dim=params.svd_dim,
-    )
+    preprocessor = Preprocessor(params.names, delimiter=params.delimiter, svd_dim=params.svd_dim,)
     index, masks, weights, features, adj = preprocessor.process(cuda=cuda)
 
     # Create dataloaders for each dataset
@@ -53,11 +156,7 @@ def train(config: Union[Path, dict]) -> None:
 
     # Create model
     model = Bionic(
-        len(index),
-        params.gat_shapes,
-        params.embedding_size,
-        len(adj),
-        svd_dim=params.svd_dim,
+        len(index), params.gat_shapes, params.embedding_size, len(adj), svd_dim=params.svd_dim,
     )
 
     # Initialize model weights
@@ -84,9 +183,7 @@ def train(config: Union[Path, dict]) -> None:
     if cuda:
         model.cuda()
 
-    optimizer = optim.Adam(
-        model.parameters(), lr=params.learning_rate, weight_decay=0.0
-    )
+    optimizer = optim.Adam(model.parameters(), lr=params.learning_rate, weight_decay=0.0)
 
     def masked_weighted_mse(output, target, weight, node_ids, mask):
         """Custom loss.
@@ -118,9 +215,7 @@ def train(config: Union[Path, dict]) -> None:
                 batch_features = [features[i] for i in rand_net_idx]
 
             # Subset `masks` tensor.
-            mask_splits = torch.split(
-                masks[:, rand_net_idx][rand_int], params.batch_size
-            )
+            mask_splits = torch.split(masks[:, rand_net_idx][rand_int], params.batch_size)
 
         else:
             batch_loaders = loaders
@@ -132,9 +227,7 @@ def train(config: Union[Path, dict]) -> None:
         losses = [0.0 for _ in range(len(batch_loaders))]
 
         # Get the data flow for each input, stored in a tuple.
-        for batch_masks, node_ids, *data_flows in zip(
-            mask_splits, int_splits, *batch_loaders
-        ):
+        for batch_masks, node_ids, *data_flows in zip(mask_splits, int_splits, *batch_loaders):
 
             optimizer.zero_grad()
             if bool(params.sample_size):
@@ -147,24 +240,18 @@ def train(config: Union[Path, dict]) -> None:
                     rand_net_idxs=rand_net_idx,
                 )
                 curr_losses = [
-                    masked_weighted_mse(
-                        output, adj[i], weights[i], node_ids, batch_masks[:, j]
-                    )
+                    masked_weighted_mse(output, adj[i], weights[i], node_ids, batch_masks[:, j])
                     for j, i in enumerate(rand_net_idx)
                 ]
             else:
                 training_datasets = adj
-                output, _, _, _ = model(
-                    training_datasets, data_flows, batch_features, batch_masks
-                )
+                output, _, _, _ = model(training_datasets, data_flows, batch_features, batch_masks)
                 curr_losses = [
-                    masked_weighted_mse(
-                        output, adj[i], weights[i], node_ids, batch_masks[:, i]
-                    )
+                    masked_weighted_mse(output, adj[i], weights[i], node_ids, batch_masks[:, i])
                     for i in range(len(adj))
                 ]
 
-            losses = [l + cl for l, cl in zip(losses, curr_losses)]
+            losses = [loss + curr_loss for loss, curr_loss in zip(losses, curr_losses)]
             loss_sum = sum(curr_losses)
             loss_sum.backward()
 
@@ -188,9 +275,7 @@ def train(config: Union[Path, dict]) -> None:
 
         if bool(params.sample_size):
             rand_net_idxs = np.random.permutation(len(adj))
-            idx_split = np.array_split(
-                rand_net_idxs, math.floor(len(adj) / params.sample_size)
-            )
+            idx_split = np.array_split(rand_net_idxs, math.floor(len(adj) / params.sample_size))
             for rand_idxs in idx_split:
                 _, losses = train_step(rand_idxs)
                 for idx, loss in zip(rand_idxs, losses):
@@ -220,9 +305,7 @@ def train(config: Union[Path, dict]) -> None:
                 writer.add_scalars("Reconstruction Errors", writer_dct, epoch)
 
             else:
-                writer.add_scalar(
-                    "Total Reconstruction Error", sum(epoch_losses), epoch
-                )
+                writer.add_scalar("Total Reconstruction Error", sum(epoch_losses), epoch)
 
         train_loss.append(epoch_losses)
 
@@ -241,9 +324,7 @@ def train(config: Union[Path, dict]) -> None:
         writer.close()
 
     # Begin inference
-    model.load_state_dict(
-        best_state["state_dict"]
-    )  # Recover model with lowest reconstruction loss
+    model.load_state_dict(best_state["state_dict"])  # Recover model with lowest reconstruction loss
     typer.echo(
         (
             f"Loaded best model from epoch {best_state['epoch']} "
@@ -268,13 +349,9 @@ def train(config: Union[Path, dict]) -> None:
     emb_list = []
 
     # Build embedding one node at a time
-    for mask, idx, *data_flows in tqdm(
-        zip(masks, index, *loaders), desc="Forward pass"
-    ):
+    for mask, idx, *data_flows in tqdm(zip(masks, index, *loaders), desc="Forward pass"):
         mask = mask.reshape((1, -1))
-        dot, emb, _, learned_scales = model(
-            adj, data_flows, features, mask, evaluate=True
-        )
+        dot, emb, _, learned_scales = model(adj, data_flows, features, mask, evaluate=True)
         emb_list.append(emb.detach().cpu().numpy())
     emb = np.concatenate(emb_list)
     emb_df = pd.DataFrame(emb, index=index)
@@ -301,9 +378,7 @@ def train(config: Union[Path, dict]) -> None:
     # Save internal learned network scales
     if params.save_network_scales:
         typer.echo("Saving network scales...")
-        learned_scales = pd.DataFrame(
-            learned_scales.detach().cpu().numpy(), columns=params.names
-        ).T
+        learned_scales = pd.DataFrame(learned_scales.detach().cpu().numpy(), columns=params.names).T
         learned_scales.to_csv(
             extend_path(params.out_name, "_network_weights.tsv"), header=False, sep="\t"
         )

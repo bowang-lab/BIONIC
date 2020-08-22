@@ -83,24 +83,17 @@ class ConfigParser(DefaultConfig):
         if isinstance(config, Path):
             config_path = config
             with config_path.open() as f:
-                config = json.load(
-                    f
-                )  # config is now a dictionary if it was previously a `Path`
+                config = json.load(f)  # config is now a dictionary if it was previously a `Path`
 
             if "out_name" not in config:
                 config["out_name"] = config_path.parent / config_path.stem
 
         # Validate required parameters are present in `config`
         required_params = DefaultConfig._required_params
-        if len(required_params.intersection(set(config.keys()))) != len(
-            required_params
-        ):
-            missing_params = "`, `".join(
-                DefaultConfig._required_params - set(config.keys())
-            )
+        if len(required_params.intersection(set(config.keys()))) != len(required_params):
+            missing_params = "`, `".join(DefaultConfig._required_params - set(config.keys()))
             raise ValueError(
-                f"Required parameter(s) `{missing_params}` not found in provided "
-                "config file."
+                f"Required parameter(s) `{missing_params}` not found in provided " "config file."
             )
 
         self._config = config

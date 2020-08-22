@@ -6,7 +6,6 @@ import torch.nn.functional as F
 
 from typing import Dict
 
-# from torch_geometric.nn import GATConv
 from .layers import WGATConv, Interp
 
 
@@ -28,7 +27,8 @@ class Bionic(nn.Module):
             emb_size (int): Dimension of learned node features.
             n_modalities (int): Number of input networks.
             alpha (float, optional): LeakyReLU negative slope. Defaults to 0.1.
-            svd_dim (int, optional): Dimension of input node feature SVD approximation. Defaults to 0.
+            svd_dim (int, optional): Dimension of input node feature SVD approximation.
+                Defaults to 0.
         """
 
         super(Bionic, self).__init__()
@@ -50,13 +50,9 @@ class Bionic(nn.Module):
         # GAT
         for i in range(self.n_modalities):
             if bool(self.svd_dim):
-                self.pre_gat_layers.append(
-                    nn.Linear(self.svd_dim, self.dimension * self.n_heads)
-                )
+                self.pre_gat_layers.append(nn.Linear(self.svd_dim, self.dimension * self.n_heads))
             else:
-                self.pre_gat_layers.append(
-                    nn.Linear(in_size, self.dimension * self.n_heads)
-                )
+                self.pre_gat_layers.append(nn.Linear(in_size, self.dimension * self.n_heads))
             self.gat_layers.append(
                 WGATConv(
                     self.dimension * self.n_heads,
@@ -79,9 +75,7 @@ class Bionic(nn.Module):
         # Embedding.
         self.emb = nn.Linear(self.integration_size, emb_size)
 
-    def forward(
-        self, datasets, data_flows, features, masks, evaluate=False, rand_net_idxs=None
-    ):
+    def forward(self, datasets, data_flows, features, masks, evaluate=False, rand_net_idxs=None):
         """
         Forward pass logic.
         """
@@ -95,9 +89,7 @@ class Bionic(nn.Module):
 
         # Define encoder logic.
         pre_cat_layers = []
-        out_pre_cat_layers = (
-            []
-        )  # Final layers before concatenation (no skip connections)
+        out_pre_cat_layers = []  # Final layers before concatenation (no skip connections)
 
         batch_size = data_flows[0][0]
         x_store_modality = torch.zeros(
@@ -135,9 +127,7 @@ class Bionic(nn.Module):
                     x_store_layer.append(x_pre)
 
                 # x = self.gat_layers[net_idx]((x, None), edge_index, vals, size)
-                x = self.gat_layers[net_idx](
-                    (x, None), edge_index, size, edge_weights=weights
-                )
+                x = self.gat_layers[net_idx]((x, None), edge_index, size, edge_weights=weights)
                 x_store_layer.append(x)
 
             x = sum(x_store_layer) + x  # Compute tensor with residuals

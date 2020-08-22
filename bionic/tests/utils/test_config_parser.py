@@ -32,10 +32,7 @@ class TestConfigParser:
 
     def test_out_name_adopts_config_file_name(self):
         cp = ConfigParser(config_no_outname_path)
-        assert (
-            cp.config["out_name"]
-            == config_no_outname_path.parent / config_no_outname_path.stem
-        )
+        assert cp.config["out_name"] == config_no_outname_path.parent / config_no_outname_path.stem
 
     def test_names_field_is_provided(self):
         mock_config_without_names = mock_config.copy()

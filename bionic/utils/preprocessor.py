@@ -84,9 +84,7 @@ class Preprocessor:
                 G_max.edges()[e]["weight"] = max_weight
 
             svd = TruncatedSVD(n_components=self.svd_dim)
-            feat = torch.tensor(
-                svd.fit_transform(nx.normalized_laplacian_matrix(G_max))
-            )
+            feat = torch.tensor(svd.fit_transform(nx.normalized_laplacian_matrix(G_max)))
 
         else:
             # Create feature matrix (identity).
