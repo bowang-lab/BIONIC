@@ -1,18 +1,21 @@
 import torch
 from torch import Tensor
 
-from bionic.train import Trainer
-
 
 def masked_scaled_mse(
-    output: Tensor, target: Tensor, scale: Tensor, node_ids: Tensor, mask: Tensor
+    output: Tensor,
+    target: Tensor,
+    scale: Tensor,
+    node_ids: Tensor,
+    mask: Tensor,
+    cuda: bool = False,
 ) -> Tensor:
     """Masked and scaled MSE loss.
     """
 
     # Subset `target` to current batch and make dense
-    if Trainer.cuda:
-        target = target.cuda()
+    if cuda:
+        target = target.to("cuda")
     target = target.adj_t[node_ids, node_ids].to_dense()
 
     loss = scale * torch.mean(
