@@ -2,10 +2,13 @@ from pathlib import Path
 from functools import reduce
 
 from tqdm import tqdm
+import typer
 import torch
 import numpy as np
 import networkx as nx
 from sklearn.decomposition import TruncatedSVD
+
+from .common import cyan, magenta
 
 from torch_geometric.transforms import ToSparseTensor
 from torch_geometric.utils import from_networkx, add_remaining_self_loops, is_undirected
@@ -28,9 +31,11 @@ class Preprocessor:
         """
         """
 
+        typer.echo("Preprocessing...")
+
         graphs = [
             nx.read_weighted_edgelist(name, delimiter=delimiter).to_undirected()
-            for name in tqdm(self.names, desc="Loading networks")
+            for name in self.names
         ]
 
         # Add weights of 1.0 if weights are missing
@@ -142,6 +147,6 @@ class Preprocessor:
                 features = features.to(device)
             pyg_graphs = [t.to(device) for t in pyg_graphs]
 
-        print(f"Preprocessing finished! {len(self.union)} total nodes.")
+        typer.echo(f"Preprocessing finished: {magenta(f'{len(self.union)}')} total nodes.")
 
         return self.union, masks, weights, features, pyg_graphs

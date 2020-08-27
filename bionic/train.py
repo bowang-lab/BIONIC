@@ -1,7 +1,7 @@
 import time
 import math
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 import typer
 import numpy as np
@@ -16,7 +16,7 @@ from .utils.config_parser import ConfigParser
 from .utils.plotter import plot_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
-from .utils.common import extend_path
+from .utils.common import extend_path, cyan, magenta
 from .model.model import Bionic
 from .model.loss import masked_scaled_mse
 
@@ -24,7 +24,9 @@ from .model.loss import masked_scaled_mse
 class Trainer:
 
     cuda = torch.cuda.is_available()
-    typer.echo("Using CUDA") if cuda else typer.echo("Using CPU")
+    typer.secho("Using CUDA", fg=typer.colors.GREEN) if cuda else typer.secho(
+        "Using CPU", fg=typer.colors.RED
+    )
 
     def __init__(self, config: Union[Path, dict]):
         self.params = self._parse_config(
@@ -133,7 +135,7 @@ class Trainer:
         # Train model.
         for epoch in range(self.params.epochs):
 
-            t = time.time()
+            time_start = time.time()
 
             # Track average loss across batches.
             epoch_losses = np.zeros(len(self.adj))
@@ -156,19 +158,7 @@ class Trainer:
                     for ep_loss, b_loss in zip(epoch_losses, losses)
                 ]
 
-            # Print training progress.
-            separator_string = typer.style("|", fg=typer.colors.MAGENTA, bold=True)
-
-            def color_header_string(string: str, **kwargs):
-                return typer.style(string, fg=typer.colors.CYAN, bold=True, **kwargs)
-
-            progress_string = f"{color_header_string('Epoch')}: {epoch + 1} {separator_string} {color_header_string('Loss Total')}: {sum(epoch_losses):.6f} {separator_string}"
-            if len(self.adj) <= 10:
-                for i, loss in enumerate(epoch_losses):
-                    progress_string += (
-                        f" {color_header_string(f'Loss {i + 1}')}: {loss:.6f} {separator_string}"
-                    )
-            progress_string += f" {color_header_string('Time (s)')}: {time.time() - t:.4f}"
+            progress_string = self._create_progress_string(epoch, epoch_losses, time_start)
             typer.echo(progress_string)
 
             # Add loss data to tensorboard visualization
@@ -275,6 +265,23 @@ class Trainer:
 
         return output, losses
 
+    def _create_progress_string(
+        self, epoch: int, epoch_losses: List[float], time_start: float
+    ) -> str:
+        """Creates a training progress string to display.
+        """
+        sep = magenta("|")
+
+        progress_string = (
+            f"{cyan('Epoch')}: {epoch + 1} {sep} "
+            f"{cyan('Loss Total')}: {sum(epoch_losses):.6f} {sep} "
+        )
+        if len(self.adj) <= 10:
+            for i, loss in enumerate(epoch_losses):
+                progress_string += f"{cyan(f'Loss {i + 1}')}: {loss:.6f} {sep} "
+        progress_string += f"{cyan('Time (s)')}: {time.time() - time_start:.4f}"
+        return progress_string
+
     def forward(self):
         # Begin inference
         self.model.load_state_dict(
@@ -282,8 +289,8 @@ class Trainer:
         )  # Recover model with lowest reconstruction loss
         typer.echo(
             (
-                f"Loaded best model from epoch {self.best_state['epoch']} "
-                f"with loss {self.best_state['best_loss']:.6f}"
+                f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
+                f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
             )
         )
 
@@ -292,14 +299,17 @@ class Trainer:
         emb_list = []
 
         # Build embedding one node at a time
-        for mask, idx, *data_flows in tqdm(
-            zip(self.masks, self.index, *self.inference_loaders), desc="Forward pass"
-        ):
-            mask = mask.reshape((1, -1))
-            dot, emb, _, learned_scales = self.model(
-                self.adj, data_flows, self.features, mask, evaluate=True
-            )
-            emb_list.append(emb.detach().cpu().numpy())
+        with typer.progressbar(
+            zip(self.masks, self.index, *self.inference_loaders),
+            label=f"{cyan('Forward Pass')}:",
+            length=len(self.index),
+        ) as progress:
+            for mask, idx, *data_flows in progress:
+                mask = mask.reshape((1, -1))
+                dot, emb, _, learned_scales = self.model(
+                    self.adj, data_flows, self.features, mask, evaluate=True
+                )
+                emb_list.append(emb.detach().cpu().numpy())
         emb = np.concatenate(emb_list)
         emb_df = pd.DataFrame(emb, index=self.index)
         emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
