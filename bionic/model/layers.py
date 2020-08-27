@@ -7,6 +7,8 @@ from torch_scatter import scatter
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 from torch_geometric.nn import GATConv
 
+from ..utils.common import Device
+
 from typing import Optional, Tuple
 from torch_geometric.typing import OptTensor
 
@@ -75,10 +77,9 @@ class Interp(nn.Module):
     should involve rewriting this.
     """
 
-    def __init__(self, n_modalities, cuda=True):
+    def __init__(self, n_modalities):
         super(Interp, self).__init__()
 
-        self.cuda = cuda
         self.scales = nn.Parameter(
             (torch.FloatTensor([1.0 for _ in range(n_modalities)]) / n_modalities).reshape((1, -1))
         )
@@ -89,12 +90,11 @@ class Interp(nn.Module):
         scales = scales[:, idxs]
 
         if evaluate:
-            random_mask = torch.IntTensor(mask.shape).random_(1, 2).float().cuda()
+            random_mask = torch.IntTensor(mask.shape).random_(1, 2).float()
         else:
-            random_mask = torch.IntTensor(mask.shape).random_(0, 2).float().cuda()
+            random_mask = torch.IntTensor(mask.shape).random_(0, 2).float()
 
-        if self.cuda:
-            random_mask = random_mask.cuda()
+        random_mask = random_mask.to(Device())
 
         mask_sum = 1 / (1 + torch.sum(random_mask, dim=-1)) ** 20
         random_mask += mask_sum.reshape((-1, 1))

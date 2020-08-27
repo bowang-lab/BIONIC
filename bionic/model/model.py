@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..utils.common import Device
+
 from typing import Dict
 
 from .layers import WGATConv, Interp
@@ -76,9 +78,7 @@ class Bionic(nn.Module):
         self.emb = nn.Linear(self.integration_size, emb_size)
 
     def forward(self, datasets, data_flows, features, masks, evaluate=False, rand_net_idxs=None):
-        """
-        Forward pass logic.
-        """
+        """Forward pass logic."""
 
         if rand_net_idxs is not None:
             idxs = rand_net_idxs
@@ -93,8 +93,8 @@ class Bionic(nn.Module):
 
         batch_size = data_flows[0][0]
         x_store_modality = torch.zeros(
-            (batch_size, self.integration_size)
-        ).cuda()  # Tensor to store results from each modality.
+            (batch_size, self.integration_size), device=Device()
+        )  # Tensor to store results from each modality.
 
         # Iterate over input networks
         for i, data_flow in enumerate(data_flows):
@@ -102,9 +102,9 @@ class Bionic(nn.Module):
 
             _, n_id, adjs = data_flow
             if isinstance(adjs, list):
-                adjs = [adj.to("cuda:0") for adj in adjs]
+                adjs = [adj.to(Device()) for adj in adjs]
             else:
-                adjs = [adjs.to("cuda:0")]
+                adjs = [adjs.to(Device())]
 
             x_store_layer = []
             # Iterate over flow (pass data through GAT)
@@ -116,7 +116,7 @@ class Bionic(nn.Module):
                         x = features[n_id].float()
 
                     else:
-                        x = torch.zeros(len(n_id), self.in_size).cuda()
+                        x = torch.zeros(len(n_id), self.in_size, device=Device())
                         x[np.arange(len(n_id)), n_id] = 1.0
 
                     x = self.pre_gat_layers[net_idx](x)

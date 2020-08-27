@@ -28,7 +28,7 @@ class TestConfigParser:
 
     def test_out_name_equals_what_is_provided(self):
         cp = ConfigParser(mock_config)
-        assert cp.config["out_name"] == Path("path/to/out_name")
+        assert cp.config["out_name"] == Path("bionic/tests/outputs/mock_integration")
 
     def test_out_name_adopts_config_file_name(self):
         cp = ConfigParser(config_no_outname_path)

@@ -3,16 +3,16 @@
     "bionic/tests/inputs/mock_network_1.txt",
     "bionic/tests/inputs/mock_network_2.txt"
   ],
-  "out_name": "path/to/out_name",
-  "epochs": 10,
+  "out_name": "bionic/tests/outputs/mock_integration",
+  "epochs": 20,
   "batch_size": 64,
   "learning_rate": 0.0003,
   "gat_shapes": {
-    "dimension": 64,
-    "n_heads": 10,
+    "dimension": 8,
+    "n_heads": 4,
     "n_layers": 3
   },
-  "embedding_size": 256,
+  "embedding_size": 8,
   "save_model": false,
 
   "sample_size": 2,

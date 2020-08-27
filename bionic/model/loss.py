@@ -1,6 +1,8 @@
 import torch
 from torch import Tensor
 
+from ..utils.common import Device
+
 
 def masked_scaled_mse(
     output: Tensor,
@@ -14,8 +16,7 @@ def masked_scaled_mse(
     """
 
     # Subset `target` to current batch and make dense
-    if cuda:
-        target = target.to("cuda")
+    target = target.to(Device())
     target = target.adj_t[node_ids, node_ids].to_dense()
 
     loss = scale * torch.mean(

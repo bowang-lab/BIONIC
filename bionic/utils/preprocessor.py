@@ -8,7 +8,7 @@ import numpy as np
 import networkx as nx
 from sklearn.decomposition import TruncatedSVD
 
-from .common import cyan, magenta
+from .common import cyan, magenta, Device
 
 from torch_geometric.transforms import ToSparseTensor
 from torch_geometric.utils import from_networkx, add_remaining_self_loops, is_undirected
@@ -31,7 +31,7 @@ class Preprocessor:
         """
         """
 
-        typer.echo("Preprocessing...")
+        typer.echo("Preprocessing input networks...")
 
         graphs = [
             nx.read_weighted_edgelist(name, delimiter=delimiter).to_undirected()
@@ -128,7 +128,7 @@ class Preprocessor:
 
         return pyg_graphs
 
-    def process(self, cuda=False):
+    def process(self):
         """
         """
 
@@ -137,15 +137,13 @@ class Preprocessor:
         features = self._create_features()
         pyg_graphs = self._create_pyg_graphs()
 
-        if cuda:
-            device = torch.device("cuda")
-            masks = masks.to(device)
-            weights = weights.to(device)
-            if isinstance(features, list):
-                features = [feature.to(device) for feature in features]
-            else:
-                features = features.to(device)
-            pyg_graphs = [t.to(device) for t in pyg_graphs]
+        masks = masks.to(Device())
+        weights = weights.to(Device())
+        if isinstance(features, list):
+            features = [feature.to(Device()) for feature in features]
+        else:
+            features = features.to(Device())
+        pyg_graphs = [t.to(Device()) for t in pyg_graphs]
 
         typer.echo(f"Preprocessing finished: {magenta(f'{len(self.union)}')} total nodes.")
 

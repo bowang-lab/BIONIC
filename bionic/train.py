@@ -1,7 +1,7 @@
 import time
 import math
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Optional
 
 import typer
 import numpy as np
@@ -16,19 +16,18 @@ from .utils.config_parser import ConfigParser
 from .utils.plotter import plot_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
-from .utils.common import extend_path, cyan, magenta
+from .utils.common import extend_path, cyan, magenta, Device
 from .model.model import Bionic
 from .model.loss import masked_scaled_mse
 
 
 class Trainer:
-
-    cuda = torch.cuda.is_available()
-    typer.secho("Using CUDA", fg=typer.colors.GREEN) if cuda else typer.secho(
-        "Using CPU", fg=typer.colors.RED
-    )
-
     def __init__(self, config: Union[Path, dict]):
+
+        typer.secho("Using CUDA", fg=typer.colors.GREEN) if Device() == "cuda" else typer.secho(
+            "Using CPU", fg=typer.colors.RED
+        )
+
         self.params = self._parse_config(
             config
         )  # parse configuration and load into `params` namespace
@@ -55,7 +54,7 @@ class Trainer:
         preprocessor = Preprocessor(
             self.params.names, delimiter=self.params.delimiter, svd_dim=self.params.svd_dim,
         )
-        return preprocessor.process(cuda=Trainer.cuda)
+        return preprocessor.process()
 
     def _make_train_loaders(self):
         return [
@@ -97,9 +96,8 @@ class Trainer:
             typer.echo("Loading pretrained model...")
             model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
 
-        # Push model to cuda device, if available
-        if Trainer.cuda:
-            model.cuda()
+        # Push model to device
+        model.to(Device())
 
         optimizer = optim.Adam(model.parameters(), lr=self.params.learning_rate, weight_decay=0.0)
 
@@ -117,14 +115,8 @@ class Trainer:
                     provided is not supported"
                 )
 
-    def train(self, **kwargs):
-        """Trains BIONIC model.
-
-        Keyword arguments matching those found in `self.params` (i.e. the config arguments)
-        can be passed here to overwrite the corresponding `self.params` arguments.
-        """
-        self.params.__dict__ = {**vars(self.params), **kwargs}  # TODO: check this works
-        # TODO: overwrite and save config (maybe?), add this functionality to CLI
+    def train(self, verbosity: Optional[int] = 1):
+        """Trains BIONIC model."""
 
         # Track losses per epoch.
         train_loss = []
@@ -158,8 +150,9 @@ class Trainer:
                     for ep_loss, b_loss in zip(epoch_losses, losses)
                 ]
 
-            progress_string = self._create_progress_string(epoch, epoch_losses, time_start)
-            typer.echo(progress_string)
+            if verbosity:
+                progress_string = self._create_progress_string(epoch, epoch_losses, time_start)
+                typer.echo(progress_string)
 
             # Add loss data to tensorboard visualization
             if self.params.use_tensorboard:
@@ -231,12 +224,7 @@ class Trainer:
                 )
                 curr_losses = [
                     masked_scaled_mse(
-                        output,
-                        self.adj[i],
-                        self.weights[i],
-                        node_ids,
-                        batch_masks[:, j],
-                        cuda=Trainer.cuda,
+                        output, self.adj[i], self.weights[i], node_ids, batch_masks[:, j]
                     )
                     for j, i in enumerate(rand_net_idx)
                 ]
@@ -247,12 +235,7 @@ class Trainer:
                 )
                 curr_losses = [
                     masked_scaled_mse(
-                        output,
-                        self.adj[i],
-                        self.weights[i],
-                        node_ids,
-                        batch_masks[:, i],
-                        cuda=Trainer.cuda,
+                        output, self.adj[i], self.weights[i], node_ids, batch_masks[:, i]
                     )
                     for i in range(len(self.adj))
                 ]
@@ -282,23 +265,25 @@ class Trainer:
         progress_string += f"{cyan('Time (s)')}: {time.time() - time_start:.4f}"
         return progress_string
 
-    def forward(self):
+    def forward(self, verbosity: Optional[int] = 1):
         # Begin inference
         self.model.load_state_dict(
             self.best_state["state_dict"]
         )  # Recover model with lowest reconstruction loss
-        typer.echo(
-            (
-                f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
-                f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+        if verbosity:
+            typer.echo(
+                (
+                    f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
+                    f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+                )
             )
-        )
 
         self.model.eval()
         StatefulSampler.step(len(self.index), random=False)
         emb_list = []
 
         # Build embedding one node at a time
+        # TODO: add verbosity control
         with typer.progressbar(
             zip(self.masks, self.index, *self.inference_loaders),
             label=f"{cyan('Forward Pass')}:",
@@ -316,7 +301,8 @@ class Trainer:
         # emb_df.to_csv(extend_path(self.params.out_name, "_features.csv"))
 
         # Free memory (necessary for sequential runs)
-        torch.cuda.empty_cache()
+        if Device() == "cuda":
+            torch.cuda.empty_cache()
 
         # Create visualization of integrated features using tensorboard projector
         if self.params.use_tensorboard:
@@ -324,19 +310,22 @@ class Trainer:
 
         # Output loss plot
         if self.params.plot_loss:
-            typer.echo("Plotting loss...")
+            if verbosity:
+                typer.echo("Plotting loss...")
             plot_losses(
                 self.train_loss, self.params.names, extend_path(self.params.out_name, "_loss.png")
             )
 
         # Save model
         if self.params.save_model:
-            typer.echo("Saving model...")
+            if verbosity:
+                typer.echo("Saving model...")
             torch.save(self.model.state_dict(), extend_path(self.params.out_name, "_model.pt"))
 
         # Save internal learned network scales
         if self.params.save_network_scales:
-            typer.echo("Saving network scales...")
+            if verbosity:
+                typer.echo("Saving network scales...")
             learned_scales = pd.DataFrame(
                 learned_scales.detach().cpu().numpy(), columns=self.params.names
             ).T
@@ -344,4 +333,4 @@ class Trainer:
                 extend_path(self.params.out_name, "_network_weights.tsv"), header=False, sep="\t"
             )
 
-        typer.echo("Complete!")
+        typer.echo(magenta("Complete!"))
