@@ -52,5 +52,5 @@ class TestConfigParser:
         params = cp.parse()
         assert params.batch_size == 64
         assert not params.save_model
-        assert params.sample_size == 2
+        assert params.sample_size == 0
         assert params.gat_shapes["n_layers"] == 3
