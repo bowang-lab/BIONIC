@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Any
 from argparse import Namespace
 
 
@@ -102,7 +102,7 @@ class ConfigParser(DefaultConfig):
         directory = path.parent
         return [p for p in directory.iterdir() if p.is_dir()]
 
-    def _get_param(self, param, default):
+    def _get_param(self, param: str, default: Any) -> Any:
         if param in self.config:
             value = self.config[param]
 

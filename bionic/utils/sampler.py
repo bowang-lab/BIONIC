@@ -13,7 +13,7 @@ class StatefulSampler(Sampler):
     has the same random ordering. Calling `step` will create a new current
     random permutation. `step` should be called each epoch. NOTE: This is
     unlikely to work if multiple threads are used in `torch.DataLoader` due
-    to GIL. 
+    to GIL.
     """
 
     perm = None  # replaced with a new random permutation on `step` call
@@ -57,6 +57,8 @@ class Adj(NamedTuple):
 
 
 class NeighborSamplerWithWeights(NeighborSampler):
+    """Allows neighbor sampling with weighted networks."""
+
     def __init__(self, data, *args, **kwargs):
         data = data.to("cpu")
         row, col, edge_attr = data.adj_t.t().coo()

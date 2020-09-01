@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 
 
 def plot_losses(train_losses: List[float], names: List[Path], plot_path: Path) -> None:
+    """Plots training loss curves."""
+
     train_losses = np.array(train_losses).T
     n_epochs = len(train_losses[0])
     x_epochs = np.arange(n_epochs)

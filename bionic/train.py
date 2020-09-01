@@ -23,6 +23,15 @@ from .model.loss import masked_scaled_mse
 
 class Trainer:
     def __init__(self, config: Union[Path, dict]):
+        """Defines the relevant training and forward pass logic for BIONIC.
+
+        A model is trained by calling `train()` and the resulting gene embeddings are
+        obtained by calling `forward()`.
+
+        Args:
+            config (Union[Path, dict]): Path to config file or dictionary containing config
+                parameters.
+        """
 
         typer.secho("Using CUDA", fg=typer.colors.GREEN) if Device() == "cuda" else typer.secho(
             "Using CPU", fg=typer.colors.RED
@@ -116,7 +125,13 @@ class Trainer:
                 )
 
     def train(self, verbosity: Optional[int] = 1):
-        """Trains BIONIC model."""
+        """Trains BIONIC model.
+
+        TODO: this should be refactored
+        
+        Args:
+            verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
+        """
 
         # Track losses per epoch.
         train_loss = []
@@ -266,6 +281,13 @@ class Trainer:
         return progress_string
 
     def forward(self, verbosity: Optional[int] = 1):
+        """Runs the forward pass on the trained BIONIC model.
+
+        TODO: this should be refactored
+        
+        Args:
+            verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
+        """
         # Begin inference
         self.model.load_state_dict(
             self.best_state["state_dict"]

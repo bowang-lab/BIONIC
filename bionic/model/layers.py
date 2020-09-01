@@ -20,8 +20,9 @@ def weighted_softmax(
     ptr: Optional[Tensor] = None,
     num_nodes: Optional[int] = None,
 ) -> Tensor:
-    """Extends the PyTorch Geometric `softmax` functionality to
-    incorporate edge weights.
+    """Extends the PyTorch Geometric `softmax` functionality to incorporate edge weights.
+
+    See the PyTorch Geomtric `softmax` documentation for details on arguments.
     """
 
     if ptr is None:
@@ -41,7 +42,7 @@ class WGATConv(GATConv):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def forward(self, *args, edge_weights=None, **kwargs):
+    def forward(self, *args, edge_weights: Optional[Tensor] = None, **kwargs):
         """Extends the `GATConv` forward function to include edge weights.
 
         The `edge_weights` variable is made an instance attribute so it can
@@ -77,7 +78,7 @@ class Interp(nn.Module):
     should involve rewriting this.
     """
 
-    def __init__(self, n_modalities):
+    def __init__(self, n_modalities: int):
         super(Interp, self).__init__()
 
         self.scales = nn.Parameter(

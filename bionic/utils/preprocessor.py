@@ -1,3 +1,4 @@
+from typing import List, Optional
 from pathlib import Path
 from functools import reduce
 
@@ -11,25 +12,29 @@ from sklearn.decomposition import TruncatedSVD
 from .common import cyan, magenta, Device
 
 from torch_geometric.transforms import ToSparseTensor
+from torch_sparse import SparseTensor
 from torch_geometric.utils import from_networkx, add_remaining_self_loops, is_undirected
-
-"""
-Preprocesses input networks
-"""
 
 
 class Preprocessor:
-    def __init__(self, file_names, delimiter=" ", save_weights=False, svd_dim=0):
+    def __init__(
+        self, file_names: List[Path], delimiter: Optional[str] = " ", svd_dim: Optional[int] = 0,
+    ):
+        """Preprocesses input networks.
+
+        Args:
+            file_names (List[Path]): Paths to input networks.
+            delimiter (Optional[str], optional): Delimiter used in input network files. Defaults to " ".
+            svd_dim (Optional[int], optional): Dimension of input node feature SVD approximation. 
+                0 implies no approximation. Defaults to 0.
+        """
 
         self.names = file_names
-        self.save_weights = save_weights
         self.svd_dim = svd_dim
         self.graphs = self._load(delimiter)
         self.union = self._get_union()
 
     def _load(self, delimiter, scale=True):
-        """
-        """
 
         typer.echo("Preprocessing input networks...")
 
@@ -46,31 +51,23 @@ class Preprocessor:
         return graphs
 
     def _get_union(self):
-        """
-        """
 
         union = reduce(np.union1d, [G.nodes() for G in self.graphs])
         return union
 
     def _create_masks(self):
-        """
-        """
 
         masks = torch.FloatTensor([np.isin(self.union, G.nodes()) for G in self.graphs])
         masks = torch.t(masks)
         return masks
 
     def _create_weights(self):
-        """
-        """
 
         # TODO in the future alternative network weighting schemes can be implemented here
         weights = torch.FloatTensor([1.0 for G in self.graphs])
         return weights
 
     def _create_features(self):
-        """
-        """
 
         if bool(self.svd_dim):
 
@@ -101,8 +98,6 @@ class Preprocessor:
         return feat
 
     def _create_pyg_graphs(self):
-        """
-        """
 
         # Extend all graphs with nodes in `self.union` and add self-loops
         # to all nodes.
@@ -114,8 +109,6 @@ class Preprocessor:
             )
             nG.add_weighted_edges_from([(n, n, 1.0) for n in nG.nodes()])
         self.graphs = new_graphs
-
-        # print((np.array(new_graphs[0].nodes()) == np.array(new_graphs[1].nodes())).all())
 
         pyg_graphs = [from_networkx(G) for G in self.graphs]
         for G in pyg_graphs:
@@ -129,13 +122,20 @@ class Preprocessor:
         return pyg_graphs
 
     def process(self):
-        """
+        """Calls relevant preprocessing functions.
+
+        Returns:
+            np.ndarray: Array of all nodes present across input networks (union of nodes).
+            Tensor: 2D binary mask tensor indicating nodes (rows) present in each network (columns).
+            Tensor: 1D network weight tensor.
+            Tensor: 2D node feature tensor. One-hot encoding or SVD union network approximation.
+            List[SparseTensor]: Processed networks in Pytorch Geometric `SparseTensor` format.
         """
 
-        masks = self._create_masks()
-        weights = self._create_weights()
-        features = self._create_features()
-        pyg_graphs = self._create_pyg_graphs()
+        masks: Tensor = self._create_masks()
+        weights: Tensor = self._create_weights()
+        features: Tensor = self._create_features()
+        pyg_graphs: List[SparseTensor] = self._create_pyg_graphs()
 
         masks = masks.to(Device())
         weights = weights.to(Device())

@@ -78,7 +78,7 @@ class Bionic(nn.Module):
         self.emb = nn.Linear(self.integration_size, emb_size)
 
     def forward(self, datasets, data_flows, features, masks, evaluate=False, rand_net_idxs=None):
-        """Forward pass logic."""
+        """Forward pass logic. TODO"""
 
         if rand_net_idxs is not None:
             idxs = rand_net_idxs
