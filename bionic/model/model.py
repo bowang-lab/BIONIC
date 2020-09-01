@@ -2,10 +2,13 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+from torch import Tensor
+from torch_sparse import SparseTensor
 
+from ..utils.sampler import Adj
 from ..utils.common import Device
 
-from typing import Dict
+from typing import Dict, List, Tuple, Optional
 
 from .layers import WGATConv, Interp
 
@@ -76,8 +79,35 @@ class Bionic(nn.Module):
         # Embedding.
         self.emb = nn.Linear(self.integration_size, emb_size)
 
-    def forward(self, datasets, data_flows, features, masks, evaluate=False, rand_net_idxs=None):
-        """Forward pass logic. TODO"""
+    def forward(
+        self,
+        datasets: List[SparseTensor],
+        data_flows: List[Tuple[int, Tensor, List[Adj]]],
+        features: Tensor,
+        masks: Tensor,
+        evaluate: Optional[bool] = False,
+        rand_net_idxs: Optional[np.ndarray] = None,
+    ):
+        """Forward pass logic.
+
+        Args:
+            datasets (List[SparseTensor]): Input networks.
+            data_flows (List[Tuple[int, Tensor, List[Adj]]]): Sampled bi-partite data flows.
+                See PyTorch Geometric documentation for more details.
+            features (Tensor): 2D node features tensor.
+            masks (Tensor): 2D masks indicating which nodes (rows) are in which networks (columns)
+            evaluate (Optional[bool], optional): Used to turn off random sampling in forward pass.
+                Defaults to False.
+            rand_net_idxs (Optional[np.ndarray], optional): Indices of networks if networks are being
+                sampled. Defaults to None.
+
+        Returns:
+            Tensor: 2D tensor of final reconstruction to be used in loss function.
+            Tensor: 2D tensor of node features. Each row is a node, each column is a feature.
+            List[Tensor]: Pre-integration network-specific node feature tensors. Not currently
+                implemented.
+            Tensor: Learned network scaling coefficients.
+        """
 
         if rand_net_idxs is not None:
             idxs = rand_net_idxs
@@ -124,7 +154,6 @@ class Bionic(nn.Module):
                     x_pre = x[: size[1]]
                     x_store_layer.append(x_pre)
 
-                # x = self.gat_layers[net_idx]((x, None), edge_index, vals, size)
                 x = self.gat_layers[net_idx]((x, None), edge_index, size, edge_weights=weights)
                 x_store_layer.append(x)
 

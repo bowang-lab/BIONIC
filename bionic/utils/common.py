@@ -25,6 +25,16 @@ def magenta(string: str, **kwargs) -> str:
     return typer.style(string, fg=typer.colors.MAGENTA, bold=True, **kwargs)
 
 
+def create_time_taken_string(time_start: float, time_end: float) -> str:
+    time_taken_seconds = time_end - time_start
+    if time_taken_seconds < 60:
+        return f"Time taken: {magenta(f'{time_taken_seconds:.2f}')} seconds"
+    elif time_taken_seconds < 3600:
+        return f"Time taken: {magenta(f'{time_taken_seconds/60:.2f}')} minutes"
+    else:
+        return f"Time taken: {magenta(f'{time_taken_seconds/3600:.2f}')} hours"
+
+
 class Device:
     """Returns the currently used device by calling `Device()`.
 

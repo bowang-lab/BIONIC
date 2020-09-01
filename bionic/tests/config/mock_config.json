@@ -5,14 +5,14 @@
   ],
   "out_name": "bionic/tests/outputs/mock_integration",
   "epochs": 200,
-  "batch_size": 64,
-  "learning_rate": 0.0003,
+  "batch_size": 10,
+  "learning_rate": 0.00001,
   "gat_shapes": {
     "dimension": 8,
-    "n_heads": 4,
-    "n_layers": 3
+    "n_heads": 1,
+    "n_layers": 1
   },
-  "embedding_size": 8,
+  "embedding_size": 4,
   "save_model": false,
   "sample_size": 0,
   "use_tensorboard": false,

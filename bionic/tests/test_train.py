@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import pandas as pd
+from scipy.spatial.distance import pdist, squareform
 from bionic.train import Trainer
 from bionic.utils.common import Device
 
@@ -56,18 +57,21 @@ class TestTrain:
     def test_connected_regions_are_similar(self):
         """Tests that connected nodes have more similar features than disconnected nodes.
 
-        In the mock datasets, the input graphs connect pairs of sequentially labelled nodes,
-        i.e. A <-> B, C <-> D, E <-> F, etc. Here, A and B should have similar features,
-        whereas A and C should not. This test runs after each of the above tests, ensuring
-        both error free `Trainer` execution and error free embeddings.
+        In the mock datasets, the input graphs consist of two, four-node cliques,
+        i.e. A, B, C, D form a clique and E, F, G, H form a clique. Here, A and B should
+        have similar features, whereas A and E, and B and E, should not. This test runs after
+        each of the above tests, ensuring both error free `Trainer` execution and error free
+        embeddings.
         """
         yield
         mock_features_path = (
             Path(__file__).resolve().parents[0] / "outputs" / "mock_integration_features.tsv"
         )
         mock_features = pd.read_csv(mock_features_path, sep="\t", index_col=0)
-        abc_features = mock_features.loc[["A", "B", "C"]].values
+        print(mock_features)
+        abc_features = mock_features.loc[["A", "B", "E"]].values
 
-        dot = abc_features @ abc_features.T
-        assert dot[0, 1] > dot[0, 2]  # A dot B > A dot C
-        assert dot[0, 1] > dot[1, 2]  # A dot B > B dot C
+        dot = 1 - squareform(pdist(abc_features, metric="cosine"))  # pairwise cosine similarity
+        print(dot)
+        assert dot[0, 1] > dot[0, 2]  # cos_sim(A, B) > cos_sim(A, E)
+        assert dot[0, 1] > dot[1, 2]  # cos_sim(A, B) > cos_sim(B, E)

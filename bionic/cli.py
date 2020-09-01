@@ -1,6 +1,8 @@
+import time
 import typer
 from pathlib import Path
-from bionic.train import Trainer
+from .train import Trainer
+from .utils.common import create_time_taken_string
 
 app = typer.Typer()
 
@@ -15,9 +17,12 @@ def train(config_path: Path):
     See https://github.com/bowang-lab/BIONIC/blob/master/README.md for details on writing
     the config file, as well as usage tips.
     """
+    time_start = time.time()
     trainer = Trainer(config_path)
     trainer.train()
     trainer.forward()
+    time_end = time.time()
+    typer.echo(create_time_taken_string(time_start, time_end))
 
 
 def main():

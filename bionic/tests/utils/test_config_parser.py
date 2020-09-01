@@ -50,7 +50,7 @@ class TestConfigParser:
     def test_config_fields_replace_defaults(self):
         cp = ConfigParser(mock_config)
         params = cp.parse()
-        assert params.batch_size == 64
+        assert params.batch_size == 10
         assert not params.save_model
         assert params.sample_size == 0
-        assert params.gat_shapes["n_layers"] == 3
+        assert params.gat_shapes["n_layers"] == 1

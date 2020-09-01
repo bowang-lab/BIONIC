@@ -1,4 +1,12 @@
-A B 0.5
-C D 0.75
-E F 1.0
-G H 0.4
+A B 1
+A C 1
+A D 0.7
+B C 0.75
+B D 0.4
+C D 0.6
+E F 1
+E G 1
+E H 0.7
+F G 0.75
+F H 0.4
+G H 0.6
