@@ -40,6 +40,13 @@ class TestTrain:
         trainer.train()
         trainer.forward()
 
+    def test_svd_approximation_completes(self):
+        mock_config_svd = mock_config.copy()
+        mock_config_svd["svd_dim"] = 3
+        trainer = Trainer(mock_config_svd)
+        trainer.train()
+        trainer.forward()
+
     def test_trainer_completes_on_cpu(self):
         Device._device = "cpu"
         assert Device() == "cpu"
