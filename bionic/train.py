@@ -6,7 +6,6 @@ from typing import Union, List, Optional
 import typer
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 import torch
 import torch.optim as optim
@@ -128,7 +127,7 @@ class Trainer:
         """Trains BIONIC model.
 
         TODO: this should be refactored
-        
+
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
         """
@@ -284,7 +283,7 @@ class Trainer:
         """Runs the forward pass on the trained BIONIC model.
 
         TODO: this should be refactored
-        
+
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
         """
@@ -328,7 +327,7 @@ class Trainer:
 
         # Create visualization of integrated features using tensorboard projector
         if self.params.use_tensorboard:
-            writer.add_embedding(emb, metadata=self.index)
+            self.writer.add_embedding(emb, metadata=self.index)
 
         # Output loss plot
         if self.params.plot_loss:

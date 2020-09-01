@@ -2,7 +2,6 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from ..utils.common import Device
 
@@ -88,8 +87,7 @@ class Bionic(nn.Module):
         scales, interp_masks = self.interp(masks, idxs, evaluate)
 
         # Define encoder logic.
-        pre_cat_layers = []
-        out_pre_cat_layers = []  # Final layers before concatenation (no skip connections)
+        out_pre_cat_layers = []  # Final layers before concatenation, not currently used
 
         batch_size = data_flows[0][0]
         x_store_modality = torch.zeros(

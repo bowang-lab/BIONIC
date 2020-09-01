@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-import numpy as np
 import pandas as pd
 from bionic.train import Trainer
 from bionic.utils.common import Device
@@ -21,7 +20,6 @@ class TestTrain:
     def test_network_batching_completes(self):
         mock_config_with_batching = mock_config.copy()
         mock_config_with_batching["sample_size"] = 1
-        mock_config_with_batching["epochs"] = 200  # increase epochs for convergence
         trainer = Trainer(mock_config_with_batching)
         trainer.train()
         trainer.forward()

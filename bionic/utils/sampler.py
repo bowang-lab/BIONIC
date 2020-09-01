@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Sampler
 from torch_geometric.data import NeighborSampler
 
-from typing import List, Optional, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple
 
 
 class StatefulSampler(Sampler):

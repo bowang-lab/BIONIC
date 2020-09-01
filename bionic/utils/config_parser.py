@@ -1,7 +1,6 @@
-import os
 import json
 from pathlib import Path
-from typing import Dict, Union, List, Any
+from typing import Union, List, Any
 from argparse import Namespace
 
 
@@ -16,10 +15,10 @@ class DefaultConfig:
         "delimiter": " ",  # Delimiter for network input files
         "epochs": 3000,  # Number of training epochs
         "batch_size": 2048,  # Number of genes/proteins in each batch
-        "sample_size": 0,  # Number of networks to batch at once (0 will batch all networks) TODO
+        "sample_size": 0,  # Number of networks to batch at once (0 will batch all networks)
         "learning_rate": 0.0005,  # Adam optimizer learning rate
         "embedding_size": 512,  # Dimensionality of output integrated features
-        "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD) TODO
+        "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD)
         "initialization": "xavier",  # Method used to initialize BIONIC weights
         "gat_shapes": {
             "dimension": 64,  # Dimension of each GAT layer
@@ -120,7 +119,7 @@ class ConfigParser(DefaultConfig):
 
     def parse(self) -> Namespace:
         """Parses config file.
-        
+
         Overrides config defaults with user provided params and returns them
         namespaced.
 

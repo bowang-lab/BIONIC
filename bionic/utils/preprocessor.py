@@ -2,18 +2,18 @@ from typing import List, Optional
 from pathlib import Path
 from functools import reduce
 
-from tqdm import tqdm
 import typer
 import torch
 import numpy as np
 import networkx as nx
 from sklearn.decomposition import TruncatedSVD
 
-from .common import cyan, magenta, Device
+from .common import magenta, Device
 
+from torch import Tensor
 from torch_geometric.transforms import ToSparseTensor
 from torch_sparse import SparseTensor
-from torch_geometric.utils import from_networkx, add_remaining_self_loops, is_undirected
+from torch_geometric.utils import from_networkx
 
 
 class Preprocessor:
@@ -25,7 +25,7 @@ class Preprocessor:
         Args:
             file_names (List[Path]): Paths to input networks.
             delimiter (Optional[str], optional): Delimiter used in input network files. Defaults to " ".
-            svd_dim (Optional[int], optional): Dimension of input node feature SVD approximation. 
+            svd_dim (Optional[int], optional): Dimension of input node feature SVD approximation.
                 0 implies no approximation. Defaults to 0.
         """
 
@@ -73,6 +73,7 @@ class Preprocessor:
 
             all_edges = [e for G in self.graphs for e in list(G.edges())]
             G_max = nx.Graph()
+            G_max.add_nodes_from(self.union)  # Ensures nodes are correctly ordered
             G_max.add_edges_from(all_edges)
             for e in G_max.edges():
                 weights = []

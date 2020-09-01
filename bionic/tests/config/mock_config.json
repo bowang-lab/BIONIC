@@ -4,7 +4,7 @@
     "bionic/tests/inputs/mock_network_2.txt"
   ],
   "out_name": "bionic/tests/outputs/mock_integration",
-  "epochs": 50,
+  "epochs": 200,
   "batch_size": 64,
   "learning_rate": 0.0003,
   "gat_shapes": {
