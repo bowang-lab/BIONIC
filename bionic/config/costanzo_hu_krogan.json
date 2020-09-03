@@ -1,0 +1,18 @@
+{
+  "names": [
+    "bionic/inputs/Costanzo.txt",
+    "bionic/inputs/Hu.txt",
+    "bionic/inputs/Krogan.txt"
+  ],
+  "out_name": "bionic/outputs/costanzo_hu_krogan",
+  "epochs": 10000,
+  "batch_size": 1024,
+  "learning_rate": 0.0005,
+  "gat_shapes": {
+    "dimension": 64,
+    "n_heads": 10,
+    "n_layers": 2
+  },
+  "embedding_size": 512,
+  "save_model": false
+}
