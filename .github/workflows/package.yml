@@ -56,9 +56,9 @@ jobs:
       name: Add PyTorch and PyG dependencies (linux)
       run: |
         poetry add https://download.pytorch.org/whl/cpu/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
         poetry add torch-geometric=1.6.1
 
     - name: Install dependencies
