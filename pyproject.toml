@@ -1,9 +1,12 @@
 [tool.poetry]
-name = "bionic"
+name = "bionic-model"
 version = "0.1.0"
 description = "Biological network integration using convolutions."
 authors = ["Duncan Forster <duncan.forster@mail.utoronto.ca>"]
 license = "MIT"
+packages = [
+  {include = "bionic"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
