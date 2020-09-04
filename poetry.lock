@@ -819,108 +819,6 @@ python-versions = "*"
 version = "0.10.1"
 
 [[package]]
-category = "main"
-description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
-name = "torch"
-optional = false
-python-versions = ">=3.6.1"
-version = "1.6.0"
-
-[package.dependencies]
-future = "*"
-numpy = "*"
-
-[package.source]
-reference = ""
-type = "url"
-url = "https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-linux_x86_64.whl"
-[[package]]
-category = "main"
-description = "PyTorch Extension Library of Optimized Graph Cluster Algorithms"
-name = "torch-cluster"
-optional = false
-python-versions = ">=3.6"
-version = "1.5.7"
-
-[package.extras]
-test = ["pytest", "pytest-cov", "scipy"]
-
-[package.source]
-reference = ""
-type = "url"
-url = "https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-linux_x86_64.whl"
-[[package]]
-category = "main"
-description = "Geometric Deep Learning Extension Library for PyTorch"
-name = "torch-geometric"
-optional = false
-python-versions = ">=3.6"
-version = "1.6.1"
-
-[package.dependencies]
-ase = "*"
-googledrivedownloader = "*"
-h5py = "*"
-jinja2 = "*"
-networkx = "*"
-numba = "*"
-numpy = "*"
-pandas = "*"
-rdflib = "*"
-requests = "*"
-scikit-learn = "*"
-scipy = "*"
-torch = "*"
-tqdm = "*"
-
-[package.extras]
-test = ["pytest", "pytest-cov", "mock"]
-
-[[package]]
-category = "main"
-description = "PyTorch Extension Library of Optimized Scatter Operations"
-name = "torch-scatter"
-optional = false
-python-versions = ">=3.6"
-version = "2.0.5"
-
-[package.extras]
-test = ["pytest", "pytest-cov"]
-
-[package.source]
-reference = ""
-type = "url"
-url = "https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-linux_x86_64.whl"
-[[package]]
-category = "main"
-description = "PyTorch Extension Library of Optimized Autograd Sparse Matrix Operations"
-name = "torch-sparse"
-optional = false
-python-versions = ">=3.6"
-version = "0.6.7"
-
-[package.dependencies]
-scipy = "*"
-
-[package.extras]
-test = ["pytest", "pytest-cov"]
-
-[package.source]
-reference = ""
-type = "url"
-url = "https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-linux_x86_64.whl"
-[[package]]
-category = "main"
-description = "Fast, Extensible Progress Meter"
-name = "tqdm"
-optional = false
-python-versions = ">=2.6, !=3.0.*, !=3.1.*"
-version = "4.45.0"
-
-[package.extras]
-dev = ["py-make (>=0.1.0)", "twine", "argopt", "pydoc-markdown"]
-
-[[package]]
 category = "dev"
 description = "Traitlets Python config system"
 name = "traitlets"
@@ -1603,17 +1501,6 @@ six = [
 toml = [
     {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},
     {file = "toml-0.10.1.tar.gz", hash = "sha256:926b612be1e5ce0634a2ca03470f95169cf16f939018233a670519cb4ac58b0f"},
-]
-torch = []
-torch-cluster = []
-torch-geometric = [
-    {file = "torch_geometric-1.6.1.tar.gz", hash = "sha256:158c153bd12408dd1ac0a543fc54bc7a7bd3ee6dcff83fd50031622aa4f9259d"},
-]
-torch-scatter = []
-torch-sparse = []
-tqdm = [
-    {file = "tqdm-4.45.0-py2.py3-none-any.whl", hash = "sha256:ea9e3fd6bd9a37e8783d75bfc4c1faf3c6813da6bd1c3e776488b41ec683af94"},
-    {file = "tqdm-4.45.0.tar.gz", hash = "sha256:00339634a22c10a7a22476ee946bbde2dbe48d042ded784e4d88e0236eca5d81"},
 ]
 traitlets = [
     {file = "traitlets-4.3.3-py2.py3-none-any.whl", hash = "sha256:70b4c6a1d9019d7b4f6846832288f86998aa3b9207c6821f3578a6a6a467fe44"},
