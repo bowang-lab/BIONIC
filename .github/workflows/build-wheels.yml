@@ -47,10 +47,17 @@ jobs:
 #           poetry-${{ hashFiles('**/poetry.lock') }}
 
 
-    - name: Set Poetry config
+    - if: matrix.os == 'ubuntu-latest'
+      name: Set Poetry config (linux)
       run: |
         poetry config virtualenvs.in-project false
         poetry config virtualenvs.path ~/.virtualenvs
+
+    - if: matrix.os == 'windows-latest'
+      name: Set Poetry config (windows)
+      run: |
+        poetry config virtualenvs.in-project false
+
 
     - if: matrix.os == 'ubuntu-latest' && matrix.cuda != 'cu102'
       name: Add PyTorch and PyG dependencies (linux)
