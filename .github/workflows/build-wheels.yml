@@ -125,9 +125,13 @@ jobs:
       name: Get rename
       run : sudo apt-get install rename
 
-    - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+    - if: matrix.os == 'ubuntu-latest'
+      name: Rename wheel (linux)
+      run: rename 's/none-any/${{ matrix.cuda }}-linux_x86_64/' dist/*.whl
+
+    - if: matrix.os == 'windows-latest' && matrix.cuda != 'cu92'
       name: Rename wheel
-      run: rename 's/none-any/${{ matrix.cuda }}-${{ matrix.os }}/' dist/*.whl
+      run: rename 's/none-any/${{ matrix.cuda }}-win_amd64/' dist/*.whl
 
     - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
       id: getfilenameagain
