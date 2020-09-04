@@ -17,7 +17,7 @@ jobs:
       matrix:
         python-version: [3.8]
         poetry-version: [1.0.10]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         cuda: [cpu, cu92, cu101, cu102]
     runs-on: ${{ matrix.os }}
 
@@ -37,14 +37,14 @@ jobs:
       with:
         poetry-version: ${{ matrix.poetry-version }}
 
-    - name: Cache Poetry virtualenv
-      uses: actions/cache@v2
-      id: cache
-      with:
-        path: ~/.virtualenvs
-        key: poetry-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          poetry-${{ hashFiles('**/poetry.lock') }}
+#     - name: Cache Poetry virtualenv
+#       uses: actions/cache@v2
+#       id: cache
+#       with:
+#         path: ~/.virtualenvs
+#         key: poetry-${{ hashFiles('**/poetry.lock') }}
+#         restore-keys: |
+#           poetry-${{ hashFiles('**/poetry.lock') }}
 
 
     - name: Set Poetry config
@@ -52,7 +52,7 @@ jobs:
         poetry config virtualenvs.in-project false
         poetry config virtualenvs.path ~/.virtualenvs
 
-    - if: ${{ matrix.os }} == 'ubuntu-latest'
+    - if: matrix.os == 'ubuntu-latest' && matrix.cuda != 'cu102'
       name: Add PyTorch and PyG dependencies (linux)
       run: |
         poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
@@ -60,11 +60,38 @@ jobs:
         poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
         poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
         poetry add torch-geometric=1.6.1
+        
+    - if: matrix.os == 'ubuntu-latest' && matrix.cuda == 'cu102'
+      name: Add PyTorch and PyG dependencies (linux, cuda 10.2)
+      run: |
+        poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+        poetry add torch-geometric=1.6.1
+    
+    - if: matrix.os == 'windows-latest' && matrix.cuda != 'cu102'
+      name: Add PyTorch and PyG dependencies (windows)
+      run: |
+        poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+        poetry add torch-geometric=1.6.1
+      
+    - if: matrix.os == 'windows-latest' && matrix.cuda == 'cu102'
+      name: Add PyTorch and PyG dependencies (windows, cuda 10.2)
+      run: |
+        poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-win_amd64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-win_amd64.whl
+        poetry add torch-geometric=1.6.1
 
     - name: Install dependencies
       run: |
         poetry install
-      if: steps.cache.outputs.cache-hit != 'true'
+#       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Format with Black
       run: |
@@ -77,7 +104,7 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - if: ${{ matrix.cuda }} == 'cpu'
+    - if: matrix.cuda == 'cpu'
       name: Test with pytest
       run: |
         poetry run pytest
@@ -93,7 +120,7 @@ jobs:
       run : sudo apt-get install rename
 
     - name: Rename wheel
-      run: rename 's/none-any/${{ matrix.cuda }}-${{ matrix.os }}}/' dist/*.whl
+      run: rename 's/none-any/${{ matrix.cuda }}-${{ matrix.os }}/' dist/*.whl
 #       run: mv ${{ steps.getfilename.outputs.file }} ${${{ steps.getfilename.outputs.file }}//none-any/${{ matrix.cuda }}-${{ matrix.os }}}
 
     - id: getfilenameagain
