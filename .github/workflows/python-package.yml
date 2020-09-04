@@ -17,12 +17,16 @@ jobs:
       matrix:
         python-version: [3.8]
         poetry-version: [1.0.10]
-#         os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+#         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
+      
+    - name: echo os
+      run: echo ${{ matrix.os }}
+      
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -52,12 +56,13 @@ jobs:
         poetry config virtualenvs.in-project false
         poetry config virtualenvs.path ~/.virtualenvs
 
-    - name: Add PyTorch and PyG dependencies
+    - name: Add PyTorch and PyG dependencies (linux)
+      if: ${{ matrix.os }} == 'ubuntu-latest'
       run: |
-        poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+        poetry add https://download.pytorch.org/whl/cpu/torch-1.6.0%2Bcpu-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
         poetry add torch-geometric=1.6.1
 
     - name: Install Dependencies
@@ -76,6 +81,6 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-#     - name: Test with pytest
-#       run: |
-#         poetry run pytest
+    - name: Test with pytest
+      run: |
+        poetry run pytest
