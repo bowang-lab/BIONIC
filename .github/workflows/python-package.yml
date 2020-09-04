@@ -64,7 +64,7 @@ jobs:
         poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
         poetry add torch-geometric=1.6.1
 
-    - name: Install Dependencies
+    - name: Install dependencies
       run: |
         poetry install
 #       if: steps.cache.outputs.cache-hit != 'true'
@@ -83,3 +83,13 @@ jobs:
     - name: Test with pytest
       run: |
         poetry run pytest
+        
+    - name: Build wheel
+      run: |
+        poetry build
+
+    - name: Upload wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheel
+        path: ls -t dist/*.whl | head -1
