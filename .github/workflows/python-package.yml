@@ -87,8 +87,11 @@ jobs:
     - name: Build wheel
       run: |
         poetry build
+        
+    - id: getfilename
+      run: echo "::set-output name=file::$(ls -t dist/*.whl | head -1)"
 
     - name: Upload wheel
       uses: actions/upload-artifact@v2
       with:
-        path: '~/dist/*.whl'
+        path: ${{ steps.getfilename.outputs.file }}
