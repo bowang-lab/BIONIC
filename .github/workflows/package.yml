@@ -17,8 +17,8 @@ jobs:
       matrix:
         python-version: [3.8]
         poetry-version: [1.0.10]
-#         os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        cuda: [cpu, cu92, cu101, cu102]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -58,10 +58,10 @@ jobs:
     - if: ${{ matrix.os }} == 'ubuntu-latest'
       name: Add PyTorch and PyG dependencies (linux)
       run: |
-        poetry add https://download.pytorch.org/whl/cpu/torch-1.6.0%2Bcpu-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
-        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcpu-cp38-cp38-linux_x86_64.whl
+        poetry add https://download.pytorch.org/whl/cpu/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+        poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B{{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
         poetry add torch-geometric=1.6.1
 
     - name: Install dependencies
@@ -80,6 +80,7 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+    - if: ${{ matrix.cuda }} == 'cpu'
     - name: Test with pytest
       run: |
         poetry run pytest
@@ -90,6 +91,9 @@ jobs:
         
     - id: getfilename
       run: echo "::set-output name=file::$(ls -t dist/*.whl | head -1)"
+
+    - name: Rename wheel
+      run: mv ${{ steps.getfilename.outputs.file }} ${${{ steps.getfilename.outputs.file }}//none-any/${{ matrix.cuda }}-${{ matrix.os }}}
 
     - name: Upload wheel
       uses: actions/upload-artifact@v2
