@@ -78,7 +78,7 @@ jobs:
         poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - if: ${{ matrix.cuda }} == 'cpu'
-    - name: Test with pytest
+      name: Test with pytest
       run: |
         poetry run pytest
         
@@ -92,7 +92,10 @@ jobs:
     - name: Rename wheel
       run: mv ${{ steps.getfilename.outputs.file }} ${${{ steps.getfilename.outputs.file }}//none-any/${{ matrix.cuda }}-${{ matrix.os }}}
 
+    - id: getfilenameagain
+      run: echo "::set-output name=file::$(ls -t dist/*.whl | head -1)"
+
     - name: Upload wheel
       uses: actions/upload-artifact@v2
       with:
-        path: ${{ steps.getfilename.outputs.file }}
+        path: ${{ steps.getfilenameagain.outputs.file }}
