@@ -88,6 +88,9 @@ jobs:
       run: |
         poetry build
 
+    - name: Echo
+      run: echo $(ls) ; echo $(pwd) ; echo $(ls dist)
+
     - name: Upload wheel
       uses: actions/upload-artifact@v2
       with:
