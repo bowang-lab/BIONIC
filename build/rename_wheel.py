@@ -9,8 +9,8 @@ wheel_path = wheel_path[0]
 def rename_wheel(os, cuda):
     wheel_name_components = wheel_path.stem.split("-")
     module_name, version = wheel_name_components[0], wheel_name_components[1]
-    os_name = os.replace("-latest", "")
-    target = Path(f"dist/{module_name}-{version}-py38-{cuda}-{os_name}.whl")
+    os_name = "win_amd64" if "windows" in os else "linux_x86_64"
+    target = Path(f"dist/{module_name}-{version}+{cuda}-cp38-cp38-{os_name}.whl")
     wheel_path.rename(target)
 
 
