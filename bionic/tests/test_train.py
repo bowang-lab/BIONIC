@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 
+import torch
 import pytest
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
 from bionic.train import Trainer
 from bionic.utils.common import Device
 
+torch.manual_seed(42 * 42 - 42 + 4 * 2)
 config_path = Path(__file__).resolve().parents[0] / "config" / "mock_config.json"
 with config_path.open() as f:
     mock_config = json.load(f)
