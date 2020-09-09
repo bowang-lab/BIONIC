@@ -1,0 +1,132 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  # push:
+  #   branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+        poetry-version: [1.0.10]
+        os: [ubuntu-latest, windows-latest]
+        cuda: [cpu, cu92, cu101, cu102]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: echo os
+        run: echo ${{ matrix.os }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      #     - name: Cache Poetry virtualenv
+      #       uses: actions/cache@v2
+      #       id: cache
+      #       with:
+      #         path: ~/.virtualenvs
+      #         key: poetry-${{ hashFiles('**/poetry.lock') }}
+      #         restore-keys: |
+      #           poetry-${{ hashFiles('**/poetry.lock') }}
+
+      - if: matrix.os == 'ubuntu-latest'
+        name: Set Poetry config (linux)
+        run: |
+          poetry config virtualenvs.in-project false
+          poetry config virtualenvs.path ~/.virtualenvs
+
+      - if: matrix.os == 'windows-latest'
+        name: Set Poetry config (windows)
+        run: |
+          poetry config virtualenvs.in-project false
+
+      - if: matrix.os == 'ubuntu-latest' && matrix.cuda != 'cu102'
+        name: Add PyTorch and PyG dependencies (linux)
+        run: |
+          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+          poetry add torch-geometric=1.6.1
+
+      - if: matrix.os == 'ubuntu-latest' && matrix.cuda == 'cu102'
+        name: Add PyTorch and PyG dependencies (linux, cuda 10.2)
+        run: |
+          poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
+          poetry add torch-geometric=1.6.1
+
+      - if: matrix.os == 'windows-latest' && matrix.cuda != 'cu102' && matrix.cuda != 'cu92'
+        name: Add PyTorch and PyG dependencies (windows)
+        run: |
+          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+          poetry add torch-geometric=1.6.1
+
+      - if: matrix.os == 'windows-latest' && matrix.cuda == 'cu102' && matrix.cuda != 'cu92'
+        name: Add PyTorch and PyG dependencies (windows, cuda 10.2)
+        run: |
+          poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-win_amd64.whl
+          poetry add torch-geometric=1.6.1
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Install dependencies
+        run: |
+          poetry install
+      #       if: steps.cache.outputs.cache-hit != 'true'
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Format with Black
+        run: |
+          poetry run black .
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - if: matrix.cuda == 'cpu'
+        name: Test with pytest
+        run: |
+          poetry run pytest
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Build wheel
+        run: |
+          poetry build
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Rename wheel
+        run: python build/rename_wheel.py --os ${{ matrix.os }} --cuda ${{ matrix.cuda }}
+
+      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
+        name: Upload wheel
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.whl
