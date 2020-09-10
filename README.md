@@ -12,97 +12,66 @@ An overview of BIONIC can be seen below.
 3. In order to train and optimize the integrated gene features, BIONIC first decodes the integrated features into a reconstruction of the input networks.
 4. BIONIC then minimizes the difference between this reconstruction and the input networks (i.e. reconstruction error) by updating its weights to learn gene features that capture relevant topological information.
 
-BIONIC is implemented in [Python 3](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/).
-
 ## :gear: Installation
-**NOTE: Currently BIONIC requires an NVIDIA GPU capable of supporting CUDA 10.0 to run.**
+- BIONIC is implemented in [Python 3.8](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/) and [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
 
-**Preinstallation:** First, ensure the [drivers](https://www.nvidia.com/download/index.aspx?lang=en-us) for your GPU are up to date.
+- BIONIC can run on the CPU or GPU. The CPU distribution will get you up and running quickly, but the GPU distributions are significantly faster for large models.
 
-### [Docker](https://www.docker.com/) (Recommended, Linux only)
+- Currently, we provide wheels for CPU, CUDA 9.2, CUDA 10.1 and CUDA 10.2 on Linux, and CPU, CUDA 10.2 and CUDA 10.2 on Windows.
 
-If you are on a Linux machine it's recommended to run BIONIC in a Docker container.
+**NOTE:** If you run into any problems with installation, please don't hesitate to open an [issue](https://github.com/bowang-lab/BIONIC/issues).
 
-1. Ensure your Docker version is at least 19.03.
+### Preinstallation for CUDA capable BIONIC
 
-2. Copy or download the Dockerfile from [here](https://raw.githubusercontent.com/bowang-lab/BIONIC/master/Dockerfile) by running
+If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure you have a CUDA capable GPU and the [drivers](https://www.nvidia.com/download/index.aspx?lang=en-us) for your GPU are up to date. Then, if you don't have CUDA installed and configured on your system already, [download](https://developer.nvidia.com/cuda-toolkit), install and configure a BIONIC compatible CUDA version. Nvidia provides detailed instructions on how to do this for both [Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [Windows](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html). 
 
-        $ wget https://raw.githubusercontent.com/bowang-lab/BIONIC/master/Dockerfile
+### Installing from wheel (recommended)
 
-3. Build the BIONIC Docker image by running
+1. Before installing BIONIC, it is recommended you create a virutal Python **3.8** environment using tools like the built in `venv` command, or [Anaconda](https://docs.anaconda.com/anaconda/user-guide/getting-started/).
 
-        $ docker build -t "bionic" /path/to/Dockerfile
-   
-   NOTE: This may take some time.
-4. Install `nvidia-container-toolkit` by running
+2. Make sure your virtual environment is active, then install BIONIC by running
 
-        $ apt-get install -y nvidia-container-toolkit
-        
-5. Create a BIONIC instance by running
+       $ pip install bionic_model==${VERSION}+${CUDA} -f https://bowang-lab.github.io/BIONIC/wheels.html
 
-        $ docker run -it --gpus all --ipc=host --network=host --volume=$PWD:/app -e NVIDIA_VISIBLE_DEVICES=0 "bionic" /bin/bash
+where `${VERSION}` is the version of BIONIC you want to install (currently `0.1.0`) and `${CUDA}` is one of `cpu`, `cu92`, `cu101`, `cu102`, corresponding to the CPU, CUDA 9.2, CUDA 10.1 and CUDA 10.2 versions, respectively. Note, as above, that `cu92` is **not** available on Windows.
 
-6. (optional) Test BIONIC works by running the following inside the Docker container
+3. Test BIONIC is installed properly by running
 
-        $ python main.py -c gav_krog.json
+       $ bionic --help
+       
+    You should see a help message. 
 
-### Direct Installation (Linux and macOS)
+### Installing using Poetry
 
-1. Download and install [Anaconda](https://www.anaconda.com/products/individual) for Python 3.x if you have not done so already.
+1. If you don't already have it, [install Poetry](https://python-poetry.org/docs/#installation).
 
-2. Install CUDA Toolkit 10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive). NOTE: The CUDA Toolkit version **must be 10.0**, other versions (such as 10.1+) will not work.
+2. Create a virtual Python **3.8** environment using tools like the built in `venv` command, or [Anaconda](https://docs.anaconda.com/anaconda/user-guide/getting-started/). Make sure your virutal environment is active for the following steps.
 
-3. Locate the CUDA Toolkit installation directory (it should be something similar to `/usr/local/cuda-10.0/bin`). Add this path to the `$PATH` variable by doing
-        
-        $ export PATH=/usr/local/cuda-10.0/bin:$PATH
+3. Install PyTorch **1.6.0** for your desired CUDA version [here](https://pytorch.org/get-started/locally/).
 
-4. Add `cuda-10.0/include` to `$CPATH` by running
+4. Install PyTorch 1.6.0 compatible PyTorch Geometric dependencies for your desired CUDA version [here](https://github.com/rusty1s/pytorch_geometric#pytorch-160).
 
-        $ export CPATH=/usr/local/cuda-10.0/include:$CPATH
-        
-5. (**Linux**) Add `cuda-10.0/lib64` to `$LD_LIBRARY_PATH` by running
+5. Make sure you are in the BIONIC root directory and run
 
-        $ export LD_LIBRARY_PATH=/usr/local/cuda-10.0/bin:$LD_LIBRARY_PATH
+       $ poetry install
+       
+6. Test BIONIC is installed properly by running
 
-    (**macOS**) Add `cuda-10.0/lib` to `$DYLD_LIBRARY_PATH` by doing
-    
-        $ export DYLD_LIBRARY_PATH=/usr/local/cuda-10.0/lib
-    
-    Your machine should now be set up to work with CUDA. Troubleshooting associated with these steps can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html#frequently-asked-questions).
-6. Clone this repository and navigate into the root directory
-
-        $ git clone https://github.com/bowang-lab/BIONIC.git
-        $ cd BIONIC
-
-7. Create a conda environment from the `environment.yml` file by doing
-  
-        $ conda env create -f environment.yml
-          
-    This will create an environment called `bionic` with all the required dependencies except for [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
-    **Ensure the** `bionic` **environment is active for the next step.**
-
-8. Install the required PyTorch Geometric dependencies
-
-        $ pip install torch-cluster==1.4.2 --no-cache-dir
-        $ pip install torch-sparse==0.4.0 --no-cache-dir
-        $ pip install torch-scatter==1.2.0 --no-cache-dir
-        $ pip install git+https://github.com/duncster94/pytorch_geometric.git@master#egg=torch-geometric
-    
-9. (optional) Test BIONIC is properly installed with
-
-        $ python main.py -c gav_krog.json
+       $ bionic --help
+       
+    You should see a help message.
 
 ## :zap: Usage
 
 ### Configuration File
-BIONIC runs by passing in a configuration file - a [JSON](https://www.w3schools.com/whatis/whatis_json.asp) file containing all the relevant model file paths and hyperparameters. You can have a uniquely named config file for each integration experiment you want to run. These config files are stored in the `src/config` directory where an example config file `gav_krog.json` is already present. `gav_krog.json` specifies the relevant parameters to integrate two, large-scale yeast protein-protein interaction networks - namely [Gavin et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16429126/) and [Krogan et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16554755/).
+BIONIC runs by passing in a configuration file - a [JSON](https://www.w3schools.com/whatis/whatis_json.asp) file containing all the relevant model file paths and hyperparameters. You can have a uniquely named config file for each integration experiment you want to run. An example config file can be found [here](https://github.com/bowang-lab/BIONIC/blob/master/bionic/config/costanzo_hu_krogan.json).
 
 The configuration keys are as follows:
 
 Argument | Default | Description
 --- | :---: | ---
 `names` | N/A | Filenames of input networks. These files should be stored in `src/inputs`. By specifying `"*"` BIONIC will integrate all networks in `src/inputs`.
-`out_name` | config file name | Name to prepend to all output files. If not specified it will be the name of the config file.
+`out_name` | config file path | Path to prepend to all output files. If not specified it will be the path of the config file. `out_name` takes the format `path/to/output` where `output` is an extensionless output file name.
 `delimiter` | `" "` | Delimiter for input network files.
 `epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](#usage-tips)).
 `batch_size` | `2048` | Number of genes in each mini-batch. Higher numbers result in faster training but also higher memory usage.
@@ -131,20 +100,20 @@ geneA geneC 0.75
 geneB geneD 1.0
 ```
 
-If the edge weight column is omitted, the network is considered binary (i.e. all edges will be given a weight of 1). These network files are stored in the `src/inputs` directory. The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
+If the edge weight column is omitted, the network is considered binary (i.e. all edges will be given a weight of 1). The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
 BIONIC assumes all networks are undirected and enforces this in its preprocessing step.
 
 ### Running BIONIC
 
 To run BIONIC, do
 
-    $ python main.py -c your_config_file.json
+    $ bionic path/to/your_config_file.json
 
-Results will be saved in the `src/outputs` directory.
+Results will be saved in the `out_name` directory as specified in the config file.
 
 ### Usage Tips
 
-The [configuration parameters table](#configuration-file) provides usage tips for many parameters. Additional suggestions are listed below. If you have any questions at all, please open an issue.
+The [configuration parameters table](#configuration-file) provides usage tips for many parameters. Additional suggestions are listed below. If you have any questions at all, please open an [issue](https://github.com/bowang-lab/BIONIC/issues).
 
 #### Hyperparameter Choice
 - `learning_rate` and `epochs` have the largest effect on training time and performance. 
@@ -158,4 +127,4 @@ The [configuration parameters table](#configuration-file) provides usage tips fo
 - BIONIC runs faster and performs better with sparser networks - as a general rule, try to keep the average node degree below 50 for each network.
 
 ## :file_folder: Datasets
-TODO
+Supplementary files can be found [here](https://data.wanglab.ml/BIONIC/).
