@@ -70,7 +70,7 @@ The configuration keys are as follows:
 
 Argument | Default | Description
 --- | :---: | ---
-`names` | N/A | Filenames of input networks. These files should be stored in `src/inputs`. By specifying `"*"` BIONIC will integrate all networks in `src/inputs`.
+`names` | N/A | Filepaths of input networks. By specifying `"*"` after the path, BIONIC will integrate all networks in the directory.
 `out_name` | config file path | Path to prepend to all output files. If not specified it will be the path of the config file. `out_name` takes the format `path/to/output` where `output` is an extensionless output file name.
 `delimiter` | `" "` | Delimiter for input network files.
 `epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](#usage-tips)).
