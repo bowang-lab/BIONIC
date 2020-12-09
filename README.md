@@ -51,11 +51,15 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
 
 4. Install PyTorch 1.6.0 compatible PyTorch Geometric dependencies for your desired CUDA version [here](https://github.com/rusty1s/pytorch_geometric#pytorch-160).
 
-5. Make sure you are in the BIONIC root directory and run
+5. Clone this repository by running
+
+       $ git clone https://github.com/bowang-lab/BIONIC.git
+
+6. Make sure you are in the BIONIC root directory and run
 
        $ poetry install
        
-6. Test BIONIC is installed properly by running
+7. Test BIONIC is installed properly by running
 
        $ bionic --help
        
