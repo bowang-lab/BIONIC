@@ -22,6 +22,7 @@ class Bionic(nn.Module):
         n_modalities: int,
         alpha: float = 0.1,
         svd_dim: int = 0,
+        shared_encoder: bool = False,
     ):
         """The BIONIC model.
 
@@ -33,6 +34,8 @@ class Bionic(nn.Module):
             alpha (float, optional): LeakyReLU negative slope. Defaults to 0.1.
             svd_dim (int, optional): Dimension of input node feature SVD approximation.
                 Defaults to 0.
+            shared_encoder (bool, optional): Whether to use the same encoder (pre-GAT
+                + GAT) for all networks.
         """
 
         super(Bionic, self).__init__()
@@ -42,6 +45,7 @@ class Bionic(nn.Module):
         self.alpha = alpha
         self.n_modalities = n_modalities
         self.svd_dim = svd_dim
+        self.shared_encoder = shared_encoder
         self.adj_dense_layers = []
         self.pre_gat_layers = []
         self.gat_layers = []
@@ -66,6 +70,9 @@ class Bionic(nn.Module):
                     add_self_loops=False,
                 )
             )
+
+            if shared_encoder:
+                break
 
         for g, gat_layer in enumerate(self.gat_layers):
             self.add_module("GAT_{}".format(g), gat_layer)
@@ -126,7 +133,10 @@ class Bionic(nn.Module):
 
         # Iterate over input networks
         for i, data_flow in enumerate(data_flows):
-            net_idx = idxs[i]
+            if self.shared_encoder:
+                net_idx = 0
+            else:
+                net_idx = idxs[i]
 
             _, n_id, adjs = data_flow
             if isinstance(adjs, list):

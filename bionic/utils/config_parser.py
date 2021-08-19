@@ -18,6 +18,7 @@ class DefaultConfig:
         "sample_size": 0,  # Number of networks to batch at once (0 will batch all networks)
         "learning_rate": 0.0005,  # Adam optimizer learning rate
         "embedding_size": 512,  # Dimensionality of output integrated features
+        "shared_encoder": False,  # Whether all networks should use the same encoder
         "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD)
         "initialization": "xavier",  # Method used to initialize BIONIC weights
         "gat_shapes": {

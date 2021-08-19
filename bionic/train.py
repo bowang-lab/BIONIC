@@ -95,11 +95,11 @@ class Trainer:
             self.params.embedding_size,
             len(self.adj),
             svd_dim=self.params.svd_dim,
+            shared_encoder=self.params.shared_encoder,
         )
         model.apply(self._init_model_weights)
 
         # Load pretrained model
-        # TODO: refactor this
         if self.params.load_pretrained_model:
             typer.echo("Loading pretrained model...")
             model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
