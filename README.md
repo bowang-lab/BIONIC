@@ -54,9 +54,17 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
 
 2. Create a virtual Python **3.8** environment using tools like the built in `venv` command, or [Anaconda](https://docs.anaconda.com/anaconda/user-guide/getting-started/). Make sure your virutal environment is active for the following steps.
 
-3. Install PyTorch **1.6.0** for your desired CUDA version [here](https://pytorch.org/get-started/locally/).
+3. Install PyTorch **1.6.0** for your desired CUDA version as follows:
 
-4. Install PyTorch 1.6.0 compatible PyTorch Geometric dependencies for your desired CUDA version [here](https://github.com/rusty1s/pytorch_geometric#pytorch-160).
+       $ pip install torch==1.6.0+${CUDA} -f https://download.pytorch.org/whl/torch_stable.html
+       
+    where `${CUDA}` is the one of the options listed in step 2 of [installing from wheel](#installing-from-wheel-recommended) above.
+
+4. Install PyTorch 1.6.0 compatible [PyTorch Geometric dependencies](https://github.com/rusty1s/pytorch_geometric#pytorch-160) for your desired CUDA version as follows:
+
+       $ pip install torch-scatter==2.0.6 torch-sparse==0.6.9 torch-cluster==1.5.9 -f https://pytorch-geometric.com/whl/torch-1.6.0+${CUDA}.html
+
+    where `${CUDA}` is the one of the options listed in step 2 of [installing from wheel](#installing-from-wheel-recommended) above.
 
 5. Clone this repository by running
 
