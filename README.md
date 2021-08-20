@@ -40,7 +40,7 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
 
        $ pip install bionic_model==${VERSION}+${CUDA} -f https://bowang-lab.github.io/BIONIC/wheels.html
 
-    where `${VERSION}` is the version of BIONIC you want to install (currently `0.1.0`) and `${CUDA}` is one of `cpu`, `cu92`, `cu101`, `cu102`, corresponding to the        CPU, CUDA 9.2, CUDA 10.1 and CUDA 10.2 versions, respectively. Note, as above, that `cu92` is **not** available on Windows.
+    where `${VERSION}` is the version of BIONIC you want to install (currently `0.1.0`) and `${CUDA}` is one of `cpu`, `cu92`, `cu101`, `cu102`, corresponding to the        CPU, CUDA 9.2, CUDA 10.1 and CUDA 10.2 versions, respectively. Note, as above, that `cu92` is **not** available on Windows. **NOTE:** There is a [known bug](https://github.com/pypa/pip/issues/7626) in certain versions of `pip` which may result in a `No matching distribution` error. If this occurs, install `pip==19.3.1` and try again.
 
 3. Test BIONIC is installed properly by running
 
