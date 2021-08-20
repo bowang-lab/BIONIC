@@ -63,6 +63,7 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
 4. Install PyTorch 1.6.0 compatible [PyTorch Geometric dependencies](https://github.com/rusty1s/pytorch_geometric#pytorch-160) for your desired CUDA version as follows:
 
        $ pip install torch-scatter==2.0.6 torch-sparse==0.6.9 torch-cluster==1.5.9 -f https://pytorch-geometric.com/whl/torch-1.6.0+${CUDA}.html
+       $ pip install torch-geometric==1.6.1
 
     where `${CUDA}` is the one of the options listed in step 2 of [installing from wheel](#installing-from-wheel-recommended) above.
 
