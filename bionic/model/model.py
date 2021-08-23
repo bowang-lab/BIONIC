@@ -23,6 +23,7 @@ class Bionic(nn.Module):
         alpha: float = 0.1,
         svd_dim: int = 0,
         shared_encoder: bool = False,
+        n_classes: Optional[List[int]] = None,
     ):
         """The BIONIC model.
 
@@ -36,6 +37,8 @@ class Bionic(nn.Module):
                 Defaults to 0.
             shared_encoder (bool, optional): Whether to use the same encoder (pre-GAT
                 + GAT) for all networks.
+            n_classes (list of int, optional): Number of classes per supervised
+                standard, if supervised standards are provided.
         """
 
         super(Bionic, self).__init__()
@@ -46,6 +49,8 @@ class Bionic(nn.Module):
         self.n_modalities = n_modalities
         self.svd_dim = svd_dim
         self.shared_encoder = shared_encoder
+        self.n_classes = n_classes
+
         self.adj_dense_layers = []
         self.pre_gat_layers = []
         self.gat_layers = []
@@ -71,20 +76,28 @@ class Bionic(nn.Module):
                 )
             )
 
-            if shared_encoder:
+            if self.shared_encoder:
                 break
 
         for g, gat_layer in enumerate(self.gat_layers):
-            self.add_module("GAT_{}".format(g), gat_layer)
+            self.add_module(f"GAT_{g}", gat_layer)
 
         for d, dense_layer in enumerate(self.pre_gat_layers):
-            self.add_module("Pre_GAT_Dense_{}".format(d), dense_layer)
+            self.add_module(f"Pre_GAT_Dense_{d}", dense_layer)
 
         self.integration_size = self.dimension * self.n_heads
         self.interp = Interp(self.n_modalities)
 
-        # Embedding.
-        self.emb = nn.Linear(self.integration_size, emb_size)
+        # Embedding
+        self.emb = nn.Linear(self.integration_size, self.emb_size)
+
+        # Supervised classification head
+        if self.n_classes:
+            self.cls_heads = [nn.Linear(self.emb_size, n_classes_) for n_classes_ in self.n_classes]
+            for h, cls_head in enumerate(self.cls_heads):
+                self.add_module(f"Classification_Head_{h}", cls_head)
+        else:
+            self.cls_heads = None
 
     def forward(
         self,
@@ -92,7 +105,7 @@ class Bionic(nn.Module):
         data_flows: List[Tuple[int, Tensor, List[Adj]]],
         features: Tensor,
         masks: Tensor,
-        evaluate: Optional[bool] = False,
+        evaluate: bool = False,
         rand_net_idxs: Optional[np.ndarray] = None,
     ):
         """Forward pass logic.
@@ -103,9 +116,9 @@ class Bionic(nn.Module):
                 See PyTorch Geometric documentation for more details.
             features (Tensor): 2D node features tensor.
             masks (Tensor): 2D masks indicating which nodes (rows) are in which networks (columns)
-            evaluate (Optional[bool], optional): Used to turn off random sampling in forward pass.
+            evaluate (bool, optional): Used to turn off random sampling in forward pass.
                 Defaults to False.
-            rand_net_idxs (Optional[np.ndarray], optional): Indices of networks if networks are being
+            rand_net_idxs (np.ndarray, optional): Indices of networks if networks are being
                 sampled. Defaults to None.
 
         Returns:
@@ -174,7 +187,13 @@ class Bionic(nn.Module):
         # Embedding
         emb = self.emb(x_store_modality)
 
-        # Dot product.
+        # Dot product (network reconstruction)
         dot = torch.mm(emb, torch.t(emb))
 
-        return dot, emb, out_pre_cat_layers, scales
+        # Classification (if standards are provided)
+        if self.cls_heads:
+            classes = [head(emb) for head in self.cls_heads]
+        else:
+            classes = None
+
+        return dot, emb, out_pre_cat_layers, scales, classes

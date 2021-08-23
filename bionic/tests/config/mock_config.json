@@ -1,5 +1,5 @@
 {
-  "names": [
+  "net_names": [
     "bionic/tests/inputs/mock_network_1.txt",
     "bionic/tests/inputs/mock_network_2.txt"
   ],

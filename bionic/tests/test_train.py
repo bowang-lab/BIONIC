@@ -48,6 +48,13 @@ class TestTrain:
         trainer.train()
         trainer.forward()
 
+    def test_shared_encoder_completes(self):
+        mock_config_shared_encoder = mock_config.copy()
+        mock_config_shared_encoder["shared_encoder"] = True
+        trainer = Trainer(mock_config_shared_encoder)
+        trainer.train()
+        trainer.forward()
+
     def test_trainer_completes_on_cpu(self):
         Device._device = "cpu"
         assert Device() == "cpu"

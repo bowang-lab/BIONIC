@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional
 from pathlib import Path
 from functools import reduce
@@ -5,8 +6,10 @@ from functools import reduce
 import typer
 import torch
 import numpy as np
+import pandas as pd
 import networkx as nx
 from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import MultiLabelBinarizer
 
 from .common import magenta, Device
 
@@ -18,29 +21,35 @@ from torch_geometric.utils import from_networkx
 
 class Preprocessor:
     def __init__(
-        self, file_names: List[Path], delimiter: Optional[str] = " ", svd_dim: Optional[int] = 0,
+        self,
+        net_names: List[Path],
+        label_names: Optional[List[Path]] = None,
+        delimiter: str = " ",
+        svd_dim: int = 0,
     ):
         """Preprocesses input networks.
 
         Args:
-            file_names (List[Path]): Paths to input networks.
-            delimiter (Optional[str], optional): Delimiter used in input network files. Defaults to " ".
-            svd_dim (Optional[int], optional): Dimension of input node feature SVD approximation.
+            net_names (List[Path]): Paths to input networks.
+            label_names(Optional[List[Path]], optional): Paths to gene/protein labels if provided,
+                otherwise `None`.
+            delimiter (str, optional): Delimiter used in input network files. Defaults to " ".
+            svd_dim (int, optional): Dimension of input node feature SVD approximation.
                 0 implies no approximation. Defaults to 0.
         """
 
-        self.names = file_names
+        self.net_names = net_names
+        self.label_names = label_names
         self.svd_dim = svd_dim
-        self.graphs = self._load(delimiter)
+        self.graphs, self.labels = self._load(delimiter)
         self.union = self._get_union()
 
-    def _load(self, delimiter, scale=True):
+    def _load(self, delimiter):
 
-        typer.echo("Preprocessing input networks...")
-
+        # Import networks
         graphs = [
             nx.read_weighted_edgelist(name, delimiter=delimiter).to_undirected()
-            for name in self.names
+            for name in self.net_names
         ]
 
         # Add weights of 1.0 if weights are missing
@@ -48,7 +57,14 @@ class Preprocessor:
             if not nx.is_weighted(G):
                 G.add_weighted_edges_from([(a, b, 1.0) for (a, b) in G.edges])
 
-        return graphs
+        # Import label data if applicable
+        labels = None
+        if self.label_names is not None:
+            for label_name in self.label_names:
+                with label_name.open() as f:
+                    labels.append(json.load(f))
+
+        return graphs, labels
 
     def _get_union(self):
 
@@ -59,12 +75,14 @@ class Preprocessor:
 
         masks = torch.FloatTensor([np.isin(self.union, G.nodes()) for G in self.graphs])
         masks = torch.t(masks)
+        masks = masks.to(Device())
         return masks
 
     def _create_weights(self):
 
-        # TODO in the future alternative network weighting schemes can be implemented here
+        # NOTE: In the future alternative network weighting schemes can be implemented here
         weights = torch.FloatTensor([1.0 for G in self.graphs])
+        weights = weights.to(Device())
         return weights
 
     def _create_features(self):
@@ -96,9 +114,16 @@ class Preprocessor:
             v = torch.FloatTensor(np.ones(len(self.union)))
             feat = torch.sparse.FloatTensor(i, v)
 
+        if isinstance(feat, list):
+            feat = [feature.to(Device()) for feature in feat]
+        else:
+            feat = feat.to(Device())
+
         return feat
 
     def _create_pyg_graphs(self):
+
+        typer.echo("Preprocessing input networks...")
 
         # Extend all graphs with nodes in `self.union` and add self-loops
         # to all nodes.
@@ -120,7 +145,47 @@ class Preprocessor:
         for G in pyg_graphs:
             to_sparse_tensor(G)
 
+        pyg_graphs = [t.to(Device()) for t in pyg_graphs]
+
         return pyg_graphs
+
+    def _create_labels(self):
+
+        if self.labels is None:
+            return (None, None, None)
+
+        typer.echo("Preprocessing labels...")
+
+        final_labels = []
+        final_masks = []
+        final_label_names = []
+
+        for curr_labels in self.labels:
+
+            # Remove genes from labels not in `self.union`
+            labels = {gene: labels_ for gene, labels_ in curr_labels.items() if gene in self.union}
+
+            # Create multi-hot encoding
+            mlb = MultiLabelBinarizer()
+            labels_mh = mlb.fit_transform(labels.values())
+            labels_mh = pd.DataFrame(labels_mh, index=labels.keys())
+
+            # Reindex `labels_mh` to include any missing genes in `self.union` and create tensor
+            labels_mh = labels_mh.reindex(self.union).fillna(0)
+            labels_mh = torch.FloatTensor(labels_mh.values)
+            labels_mh = labels_mh.to(Device())
+
+            # Create mask tensor to indicate missing genes
+            labels_genes = set(labels.keys())
+            mask = torch.FloatTensor([gene in labels_genes for gene in self.union])
+            mask = torch.t(mask)
+            mask = mask.to(Device())
+
+            final_labels.append(labels_mh)
+            final_masks.append(mask)
+            final_label_names.append(mlb.classes_)
+
+        return final_labels, final_masks, final_label_names
 
     def process(self):
         """Calls relevant preprocessing functions.
@@ -138,14 +203,11 @@ class Preprocessor:
         features: Tensor = self._create_features()
         pyg_graphs: List[SparseTensor] = self._create_pyg_graphs()
 
-        masks = masks.to(Device())
-        weights = weights.to(Device())
-        if isinstance(features, list):
-            features = [feature.to(Device()) for feature in features]
-        else:
-            features = features.to(Device())
-        pyg_graphs = [t.to(Device()) for t in pyg_graphs]
+        labels: Optional[List[Tensor]]
+        label_masks: Optional[List[Tensor]]
+        label_names: Optional[List[list]]
+        labels, label_masks, label_names = self._create_labels()
 
         typer.echo(f"Preprocessing finished: {magenta(f'{len(self.union)}')} total nodes.")
 
-        return self.union, masks, weights, features, pyg_graphs
+        return self.union, masks, weights, features, pyg_graphs, labels, label_masks, label_names

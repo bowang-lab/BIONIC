@@ -11,13 +11,13 @@ with config_path.open() as f:
 # Update `mock_config` "names" parameter to take this file's path into account
 mock_config["names"] = [
     Path(__file__).resolve().parents[1] / "inputs" / Path(name).name
-    for name in mock_config["names"]
+    for name in mock_config["net_names"]
 ]
 
 
 class TestPreprocessor:
     def test_final_networks_have_same_nodes_and_node_ordering(self):
-        p = Preprocessor(mock_config["names"])
+        p = Preprocessor(mock_config["net_names"])
         p.process()
         for G1 in p.graphs:
             for G2 in p.graphs:

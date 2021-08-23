@@ -1,4 +1,5 @@
 import json
+import warnings
 from pathlib import Path
 from typing import Union, List, Any
 from argparse import Namespace
@@ -10,7 +11,8 @@ class DefaultConfig:
 
     # Default config parameters used unless specified by user
     _defaults = {
-        "names": None,  # Filenames of input networks
+        "net_names": None,  # Filepaths of input networks
+        "label_names": None,  # Filepaths of gene/protein labels (if available)
         "out_name": None,  # Name of output feature, model and network weight files
         "delimiter": " ",  # Delimiter for network input files
         "epochs": 3000,  # Number of training epochs
@@ -21,23 +23,25 @@ class DefaultConfig:
         "shared_encoder": False,  # Whether all networks should use the same encoder
         "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD)
         "initialization": "xavier",  # Method used to initialize BIONIC weights
+        "lambda": None,  # Final loss is `lambda` * `rec_loss` + (1 - `lambda`) * `cls_loss`
         "gat_shapes": {
             "dimension": 64,  # Dimension of each GAT layer
             "n_heads": 10,  # Number of attention heads for each GAT layer
             "n_layers": 2,  # Number of GAT layers for each input network
         },
         "save_network_scales": False,  # Whether to save internal learned network feature scaling
-        "save_model": True,  # Whether to save the trained model or not
+        "save_model": False,  # Whether to save the trained model or not
+        "save_label_predictions": False,  # Whether to save supervised label predictions
         "load_pretrained_model": False,  # Whether to load a pretrained model TODO
         "use_tensorboard": False,  # Whether to output tensorboard data
         "plot_loss": True,  # Whether to plot loss curves
     }
 
     # Required parameters not specified in `_defaults`
-    _required_params = {"names"}
+    _required_params = {"net_names"}
 
     # Parameters that should be cast to `Path` type
-    _path_args = {"names", "out_name"}
+    _path_args = {"net_names", "label_names", "out_name"}
 
     def __init__(self, config: dict):
 
@@ -45,10 +49,16 @@ class DefaultConfig:
 
         # Make sure all path strings are mapped to `Path`s
         for arg in DefaultConfig._path_args:
+
+            if arg not in self.config:
+                continue
+
             if isinstance(self.config[arg], list):
                 self.config[arg] = [
                     Path(path_string).expanduser() for path_string in self.config[arg]
                 ]
+            elif self.config[arg] is None:
+                self.config[arg] = None
             else:
                 self.config[arg] = Path(self.config[arg]).expanduser()
 
@@ -107,7 +117,7 @@ class ConfigParser(DefaultConfig):
             value = self.config[param]
 
             # Handle `Path` versions of "names" parameter
-            if param == "names" and isinstance(value, Path):
+            if param == "net_names" and isinstance(value, Path):
                 if value.stem == "*":
                     return self._resolve_asterisk_path(value)
                 else:
@@ -116,6 +126,19 @@ class ConfigParser(DefaultConfig):
             return value
 
         else:
+
+            if param == "lambda":
+                if "label_names" in self.config:
+                    lambda_default = 0.9
+                    warnings.warn(
+                        "`label_names` was provided but `lambda` was not. It will be set to "
+                        f"{lambda_default}. If this is not desired (or to suppress this warning), "
+                        "specify an appropriate `lambda` value in the config."
+                    )
+                    return lambda_default
+                else:
+                    return 1.0
+
             return default
 
     def parse(self) -> Namespace:
@@ -132,5 +155,10 @@ class ConfigParser(DefaultConfig):
             param: self._get_param(param, default)
             for param, default in DefaultConfig._defaults.items()
         }
+
+        # Replace `lambda` with `lambda_` to avoid collison with built-in function
+        parsed_params["lambda_"] = parsed_params["lambda"]
+        del parsed_params["lambda"]
+
         namespace = Namespace(**parsed_params)
         return namespace
