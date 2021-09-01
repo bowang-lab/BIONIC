@@ -60,8 +60,9 @@ class Preprocessor:
         # Import label data if applicable
         labels = None
         if self.label_names is not None:
+            labels = []
             for label_name in self.label_names:
-                with label_name.open() as f:
+                with label_name.open("r") as f:
                     labels.append(json.load(f))
 
         return graphs, labels
@@ -133,6 +134,7 @@ class Preprocessor:
             nG.add_weighted_edges_from(
                 [(s, t, weight["weight"]) for (s, t, weight) in G.edges(data=True)]
             )
+            nG.remove_edges_from(nx.selfloop_edges(nG))  # remove existing selfloops first
             nG.add_weighted_edges_from([(n, n, 1.0) for n in nG.nodes()])
         self.graphs = new_graphs
 

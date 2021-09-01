@@ -1,3 +1,4 @@
+import json
 import time
 import math
 import warnings
@@ -57,6 +58,8 @@ class Trainer:
         self.inference_loaders = self._make_inference_loaders()
         self.model, self.optimizer = self._init_model()
 
+        self.gradients = {name: [] for name in dict(self.model.named_parameters())}
+
     def _parse_config(self, config):
         cp = ConfigParser(config)
         return cp.parse()
@@ -81,10 +84,10 @@ class Trainer:
         return [
             NeighborSamplerWithWeights(
                 ad,
-                sizes=[10] * self.params.gat_shapes["n_layers"],
+                sizes=[max(30 - idx * 5, 5) for idx in range(self.params.gat_shapes["n_layers"])],
                 batch_size=self.params.batch_size,
-                shuffle=False,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
+                shuffle=False,
             )
             for ad in self.adj
         ]
@@ -95,13 +98,19 @@ class Trainer:
                 ad,
                 sizes=[-1] * self.params.gat_shapes["n_layers"],  # all neighbors
                 batch_size=1,
-                shuffle=False,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
+                shuffle=False,
             )
             for ad in self.adj
         ]
 
     def _init_model(self):
+
+        if self.labels:
+            n_classes = [label.shape[1] for label in self.labels]
+        else:
+            n_classes = None
+
         model = Bionic(
             len(self.index),
             self.params.gat_shapes,
@@ -109,6 +118,7 @@ class Trainer:
             len(self.adj),
             svd_dim=self.params.svd_dim,
             shared_encoder=self.params.shared_encoder,
+            n_classes=n_classes,
         )
         model.apply(self._init_model_weights)
 
@@ -138,8 +148,6 @@ class Trainer:
 
     def train(self, verbosity: Optional[int] = 1):
         """Trains BIONIC model.
-
-        TODO: this should be refactored
 
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
@@ -171,6 +179,10 @@ class Trainer:
                     _, losses = self._train_step(rand_idxs)
                     for idx, loss in zip(rand_idxs, losses):
                         epoch_losses[idx] += loss
+
+                    # Add classification losses if applicable
+                    for idx, loss in enumerate(losses[len(rand_idxs) :]):
+                        epoch_losses[len(rand_idxs) + idx] = loss
 
             else:
                 _, losses = self._train_step()
@@ -205,7 +217,6 @@ class Trainer:
                     "best_loss": best_loss,
                 }
                 best_state = state
-                # torch.save(state, f'checkpoints/{self.params.out_name}_model.pt')
 
         if self.params.use_tensorboard:
             self.writer.close()
@@ -245,12 +256,13 @@ class Trainer:
         # Get the data flow for each input, stored in a tuple.
         for batch_masks, node_ids, *data_flows in zip(mask_splits, int_splits, *batch_loaders):
 
+            self.optimizer.zero_grad()
+
             # Subset supervised labels and masks if provided
             if self.labels is not None:
                 batch_labels = [labels[node_ids, :] for labels in self.labels]
-                batch_labels_masks = [self.labels_masks[node_ids] for _ in self.labels]
+                batch_labels_masks = [label_masks[node_ids] for label_masks in self.label_masks]
 
-            self.optimizer.zero_grad()
             if bool(self.params.sample_size):
                 training_datasets = [self.adj[i] for i in rand_net_idx]
                 output, _, _, _, label_preds = self.model(
@@ -335,24 +347,25 @@ class Trainer:
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
         """
+
         # Begin inference
-        self.model.load_state_dict(
-            self.best_state["state_dict"]
-        )  # Recover model with lowest reconstruction loss
-        if verbosity:
-            typer.echo(
-                (
-                    f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
-                    f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+        if self.labels is None:
+            self.model.load_state_dict(
+                self.best_state["state_dict"]
+            )  # Recover model with lowest reconstruction loss if no classification objective
+            if verbosity:
+                typer.echo(
+                    (
+                        f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
+                        f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+                    )
                 )
-            )
 
         self.model.eval()
         StatefulSampler.step(len(self.index), random=False)
         emb_list = []
 
         # Build embedding one node at a time
-        # TODO: add verbosity control
         with typer.progressbar(
             zip(self.masks, self.index, *self.inference_loaders),
             label=f"{cyan('Forward Pass')}:",
@@ -367,7 +380,6 @@ class Trainer:
         emb = np.concatenate(emb_list)
         emb_df = pd.DataFrame(emb, index=self.index)
         emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
-        # emb_df.to_csv(extend_path(self.params.out_name, "_features.csv"))
 
         # Free memory (necessary for sequential runs)
         if Device() == "cuda":
@@ -405,6 +417,7 @@ class Trainer:
                 extend_path(self.params.out_name, "_network_weights.tsv"), header=False, sep="\t"
             )
 
+        # Save label predictions
         if self.params.save_label_predictions:
             if verbosity:
                 typer.echo("Saving predicted labels...")

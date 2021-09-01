@@ -22,7 +22,7 @@ class DefaultConfig:
         "embedding_size": 512,  # Dimensionality of output integrated features
         "shared_encoder": False,  # Whether all networks should use the same encoder
         "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD)
-        "initialization": "xavier",  # Method used to initialize BIONIC weights
+        "initialization": "kaiming",  # Method used to initialize BIONIC weights
         "lambda": None,  # Final loss is `lambda` * `rec_loss` + (1 - `lambda`) * `cls_loss`
         "gat_shapes": {
             "dimension": 64,  # Dimension of each GAT layer
@@ -129,7 +129,7 @@ class ConfigParser(DefaultConfig):
 
             if param == "lambda":
                 if "label_names" in self.config:
-                    lambda_default = 0.9
+                    lambda_default = 0.95
                     warnings.warn(
                         "`label_names` was provided but `lambda` was not. It will be set to "
                         f"{lambda_default}. If this is not desired (or to suppress this warning), "

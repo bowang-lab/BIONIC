@@ -4,7 +4,10 @@
     "bionic/inputs/Hu.txt",
     "bionic/inputs/Krogan.txt"
   ],
-  "out_name": "bionic/outputs/costanzo_hu_krogan",
+  "label_names": [
+    "/h/forsterd/BIONIC-v2/BIONIC/bionic/inputs/yeast_complex_labels.json"
+  ],
+  "out_name": "bionic/outputs/costanzo_hu_krogan_semisupervised",
   "epochs": 2123,
   "batch_size": 2048,
   "learning_rate": 0.0005830944755717023,
@@ -14,5 +17,6 @@
     "n_layers": 3
   },
   "embedding_size": 512,
+  "lambda": 0.95,
   "save_model": false
 }

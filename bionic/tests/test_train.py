@@ -62,6 +62,36 @@ class TestTrain:
         trainer.train()
         trainer.forward()
 
+    def test_supervised_trainer_completes(self):
+        mock_config_with_labels = mock_config.copy()
+        mock_config_with_labels["label_names"] = ["bionic/tests/inputs/mock_labels.json"]
+        mock_config_with_labels["lambda"] = 0.95
+        trainer = Trainer(mock_config_with_labels)
+        trainer.train()
+        trainer.forward()
+
+    def test_supervised_trainer_with_multiple_labels_completes(self):
+        mock_config_with_multiple_labels = mock_config.copy()
+        mock_config_with_multiple_labels["label_names"] = [
+            "bionic/tests/inputs/mock_labels.json",
+            "bionic/tests/inputs/mock_labels.json",
+        ]
+        mock_config_with_multiple_labels["lambda"] = 0.95
+        trainer = Trainer(mock_config_with_multiple_labels)
+        trainer.train()
+        trainer.forward()
+
+    def test_supervised_trainer_with_network_batching_completes(self):
+        mock_config_with_labels_and_batching = mock_config.copy()
+        mock_config_with_labels_and_batching["label_names"] = [
+            "bionic/tests/inputs/mock_labels.json"
+        ]
+        mock_config_with_labels_and_batching["lambda"] = 0.95
+        mock_config_with_labels_and_batching["sample_size"] = 1
+        trainer = Trainer(mock_config_with_labels_and_batching)
+        trainer.train()
+        trainer.forward()
+
     @pytest.fixture(autouse=True)
     def test_connected_regions_are_similar(self):
         """Tests that connected nodes have more similar features than disconnected nodes.

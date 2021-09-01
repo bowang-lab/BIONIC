@@ -68,11 +68,12 @@ class Bionic(nn.Module):
                 self.pre_gat_layers.append(nn.Linear(in_size, self.dimension * self.n_heads))
             self.gat_layers.append(
                 WGATConv(
-                    self.dimension * self.n_heads,
+                    (self.dimension * self.n_heads, self.dimension * self.n_heads),
                     self.dimension,
                     heads=self.n_heads,
                     dropout=0,
-                    add_self_loops=False,
+                    negative_slope=self.alpha,
+                    add_self_loops=True,
                 )
             )
 
@@ -134,7 +135,7 @@ class Bionic(nn.Module):
         else:
             idxs = list(range(self.n_modalities))
 
-        scales, interp_masks = self.interp(masks, idxs, evaluate)
+        net_scales, interp_masks = self.interp(masks, idxs, evaluate)
 
         # Define encoder logic.
         out_pre_cat_layers = []  # Final layers before concatenation, not currently used
@@ -177,11 +178,12 @@ class Bionic(nn.Module):
                     x_pre = x[: size[1]]
                     x_store_layer.append(x_pre)
 
-                x = self.gat_layers[net_idx]((x, None), edge_index, size, edge_weights=weights)
-                x_store_layer.append(x)
+                x = self.gat_layers[net_idx](
+                    (x, x[: size[1]]), edge_index, size=size, edge_weights=weights
+                )
 
             x = sum(x_store_layer) + x  # Compute tensor with residuals
-            x = scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
+            x = net_scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
             x_store_modality += x
 
         # Embedding
@@ -196,4 +198,4 @@ class Bionic(nn.Module):
         else:
             classes = None
 
-        return dot, emb, out_pre_cat_layers, scales, classes
+        return dot, emb, out_pre_cat_layers, net_scales, classes

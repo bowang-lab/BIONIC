@@ -4,6 +4,16 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
+LINE_WIDTH = 1.5
+
+
+def palette_gen(n_colors):
+    palette = plt.get_cmap("tab10")
+    curr_idx = 0
+    while curr_idx < 10:
+        yield palette.colors[curr_idx]
+        curr_idx += 1
+
 
 def plot_losses(
     train_losses: List[np.ndarray],
@@ -21,20 +31,46 @@ def plot_losses(
 
     fig, ax1 = plt.subplots(figsize=(8, 5))
 
-    if len(train_losses) > 10:
-        ax1.plot(x_epochs, total_recon_loss)
-        plt.title("Total Error")
+    if label_names is not None:
+        n_lines = len(train_losses) + 2
+    else:
+        n_lines = len(train_losses) + 1
+
+    gen = palette_gen(n_lines)
+
+    if n_lines > 10:
+        if label_names is not None:
+            ax1.plot(
+                x_epochs, total_recon_loss, lw=LINE_WIDTH, c=next(gen), label="Reconstruction Total"
+            )
+            ax2 = ax1.twinx()
+            total_cls_loss = train_losses[len(net_names) :].sum(axis=0)
+            ax2.plot(
+                x_epochs, total_cls_loss, label="Classification Total", lw=LINE_WIDTH, c=next(gen)
+            )
+
+            ax2.set_ylabel("Classification Loss")
+            ax2.set_yscale("log")
+
+            plt.title("Total Reconstruction + Classification Loss")
+        else:
+            ax1.plot(x_epochs, total_recon_loss, lw=LINE_WIDTH, c=next(gen))
+            plt.title("Total Reconstruction Loss")
     else:
         for loss, name in zip(train_losses[: len(net_names)], net_names):
-            ax1.plot(x_epochs, loss, label=name.name)
-        ax1.plot(x_epochs, total_recon_loss, label="Reconstruction Total")
+            ax1.plot(x_epochs, loss, label=name.name, lw=LINE_WIDTH, c=next(gen))
+        ax1.plot(
+            x_epochs, total_recon_loss, label="Reconstruction Total", lw=LINE_WIDTH, c=next(gen)
+        )
 
         if label_names is not None:
             ax2 = ax1.twinx()
             for loss, name in zip(train_losses[len(net_names) :], label_names):
-                ax2.plot(x_epochs, loss, label=name.name)
-            total_cls_loss = train_losses[len(net_names) :]
-            ax2.plot(x_epochs, total_cls_loss, label="Reconstruction Total")
+                ax2.plot(x_epochs, loss, label=name.name, lw=LINE_WIDTH, c=next(gen))
+            total_cls_loss = train_losses[len(net_names) :].sum(axis=0)
+            ax2.plot(
+                x_epochs, total_cls_loss, label="Classification Total", lw=LINE_WIDTH, c=next(gen)
+            )
 
             ax2.set_ylabel("Classification Loss")
             ax2.set_yscale("log")
@@ -43,11 +79,12 @@ def plot_losses(
 
         else:
             plt.title("Reconstruction Losses")
-        plt.legend()
+    fig.legend()
 
     plt.xlabel("Epochs")
     ax1.set_ylabel("Reconstruction Loss")
     ax1.set_yscale("log")
     plt.grid(which="minor", axis="y")
+    plt.tight_layout()
 
     plt.savefig(plot_path)
