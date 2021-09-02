@@ -1,5 +1,5 @@
 {
-  "names": [
+  "net_names": [
     "bionic/tests/inputs/mock_network_1.txt",
     "bionic/tests/inputs/mock_network_2.txt"
   ],
@@ -13,9 +13,7 @@
   },
   "embedding_size": 256,
   "save_model": false,
-
   "sample_size": 2,
-
   "use_tensorboard": false,
   "plot_loss": true
 }

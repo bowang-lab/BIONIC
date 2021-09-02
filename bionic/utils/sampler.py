@@ -3,6 +3,7 @@ from torch.utils.data import Sampler
 from torch_geometric.data import NeighborSampler
 
 from typing import List, Tuple, NamedTuple
+from torch import Tensor
 
 
 class StatefulSampler(Sampler):
@@ -67,17 +68,15 @@ class NeighborSamplerWithWeights(NeighborSampler):
         super().__init__(edge_index, *args, **kwargs)
 
     def sample(self, batch):
-        if not isinstance(batch, torch.Tensor):
+        if not isinstance(batch, Tensor):
             batch = torch.tensor(batch)
 
         batch_size: int = len(batch)
         adjs: List[Adj] = []
-
         n_id = batch
         for size in self.sizes:
-            adj, n_id = self.adj.sample_adj(n_id, size, replace=False)
-            if self.flow == "source_to_target":
-                adj = adj.t()
+            adj_t, n_id = self.adj_t.sample_adj(n_id, size, replace=False)
+            adj = adj_t.t()
             row, col, e_id = adj.coo()
             size = adj.sparse_sizes()
             edge_index = torch.stack([row, col], dim=0)

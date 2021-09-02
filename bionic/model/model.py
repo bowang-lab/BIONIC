@@ -22,6 +22,8 @@ class Bionic(nn.Module):
         n_modalities: int,
         alpha: float = 0.1,
         svd_dim: int = 0,
+        shared_encoder: bool = False,
+        n_classes: Optional[List[int]] = None,
     ):
         """The BIONIC model.
 
@@ -33,6 +35,10 @@ class Bionic(nn.Module):
             alpha (float, optional): LeakyReLU negative slope. Defaults to 0.1.
             svd_dim (int, optional): Dimension of input node feature SVD approximation.
                 Defaults to 0.
+            shared_encoder (bool, optional): Whether to use the same encoder (pre-GAT
+                + GAT) for all networks.
+            n_classes (list of int, optional): Number of classes per supervised
+                standard, if supervised standards are provided.
         """
 
         super(Bionic, self).__init__()
@@ -42,6 +48,9 @@ class Bionic(nn.Module):
         self.alpha = alpha
         self.n_modalities = n_modalities
         self.svd_dim = svd_dim
+        self.shared_encoder = shared_encoder
+        self.n_classes = n_classes
+
         self.adj_dense_layers = []
         self.pre_gat_layers = []
         self.gat_layers = []
@@ -59,25 +68,37 @@ class Bionic(nn.Module):
                 self.pre_gat_layers.append(nn.Linear(in_size, self.dimension * self.n_heads))
             self.gat_layers.append(
                 WGATConv(
-                    self.dimension * self.n_heads,
+                    (self.dimension * self.n_heads, self.dimension * self.n_heads),
                     self.dimension,
                     heads=self.n_heads,
                     dropout=0,
-                    add_self_loops=False,
+                    negative_slope=self.alpha,
+                    add_self_loops=True,
                 )
             )
 
+            if self.shared_encoder:
+                break
+
         for g, gat_layer in enumerate(self.gat_layers):
-            self.add_module("GAT_{}".format(g), gat_layer)
+            self.add_module(f"GAT_{g}", gat_layer)
 
         for d, dense_layer in enumerate(self.pre_gat_layers):
-            self.add_module("Pre_GAT_Dense_{}".format(d), dense_layer)
+            self.add_module(f"Pre_GAT_Dense_{d}", dense_layer)
 
         self.integration_size = self.dimension * self.n_heads
         self.interp = Interp(self.n_modalities)
 
-        # Embedding.
-        self.emb = nn.Linear(self.integration_size, emb_size)
+        # Embedding
+        self.emb = nn.Linear(self.integration_size, self.emb_size)
+
+        # Supervised classification head
+        if self.n_classes:
+            self.cls_heads = [nn.Linear(self.emb_size, n_classes_) for n_classes_ in self.n_classes]
+            for h, cls_head in enumerate(self.cls_heads):
+                self.add_module(f"Classification_Head_{h}", cls_head)
+        else:
+            self.cls_heads = None
 
     def forward(
         self,
@@ -85,7 +106,7 @@ class Bionic(nn.Module):
         data_flows: List[Tuple[int, Tensor, List[Adj]]],
         features: Tensor,
         masks: Tensor,
-        evaluate: Optional[bool] = False,
+        evaluate: bool = False,
         rand_net_idxs: Optional[np.ndarray] = None,
     ):
         """Forward pass logic.
@@ -96,9 +117,9 @@ class Bionic(nn.Module):
                 See PyTorch Geometric documentation for more details.
             features (Tensor): 2D node features tensor.
             masks (Tensor): 2D masks indicating which nodes (rows) are in which networks (columns)
-            evaluate (Optional[bool], optional): Used to turn off random sampling in forward pass.
+            evaluate (bool, optional): Used to turn off random sampling in forward pass.
                 Defaults to False.
-            rand_net_idxs (Optional[np.ndarray], optional): Indices of networks if networks are being
+            rand_net_idxs (np.ndarray, optional): Indices of networks if networks are being
                 sampled. Defaults to None.
 
         Returns:
@@ -114,7 +135,7 @@ class Bionic(nn.Module):
         else:
             idxs = list(range(self.n_modalities))
 
-        scales, interp_masks = self.interp(masks, idxs, evaluate)
+        net_scales, interp_masks = self.interp(masks, idxs, evaluate)
 
         # Define encoder logic.
         out_pre_cat_layers = []  # Final layers before concatenation, not currently used
@@ -126,7 +147,10 @@ class Bionic(nn.Module):
 
         # Iterate over input networks
         for i, data_flow in enumerate(data_flows):
-            net_idx = idxs[i]
+            if self.shared_encoder:
+                net_idx = 0
+            else:
+                net_idx = idxs[i]
 
             _, n_id, adjs = data_flow
             if isinstance(adjs, list):
@@ -154,17 +178,24 @@ class Bionic(nn.Module):
                     x_pre = x[: size[1]]
                     x_store_layer.append(x_pre)
 
-                x = self.gat_layers[net_idx]((x, None), edge_index, size, edge_weights=weights)
-                x_store_layer.append(x)
+                x = self.gat_layers[net_idx](
+                    (x, x[: size[1]]), edge_index, size=size, edge_weights=weights
+                )
 
             x = sum(x_store_layer) + x  # Compute tensor with residuals
-            x = scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
+            x = net_scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
             x_store_modality += x
 
         # Embedding
         emb = self.emb(x_store_modality)
 
-        # Dot product.
+        # Dot product (network reconstruction)
         dot = torch.mm(emb, torch.t(emb))
 
-        return dot, emb, out_pre_cat_layers, scales
+        # Classification (if standards are provided)
+        if self.cls_heads:
+            classes = [head(emb) for head in self.cls_heads]
+        else:
+            classes = None
+
+        return dot, emb, out_pre_cat_layers, net_scales, classes

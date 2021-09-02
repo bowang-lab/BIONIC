@@ -1,5 +1,7 @@
+import json
 import time
 import math
+import warnings
 from pathlib import Path
 from typing import Union, List, Optional
 
@@ -17,7 +19,7 @@ from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
 from .utils.common import extend_path, cyan, magenta, Device
 from .model.model import Bionic
-from .model.loss import masked_scaled_mse
+from .model.loss import masked_scaled_mse, classification_loss
 
 
 class Trainer:
@@ -42,10 +44,21 @@ class Trainer:
         self.writer = (
             self._init_tensorboard()
         )  # create `SummaryWriter` for tensorboard visualization
-        self.index, self.masks, self.weights, self.features, self.adj = self._preprocess_inputs()
+        (
+            self.index,
+            self.masks,
+            self.weights,
+            self.features,
+            self.adj,
+            self.labels,
+            self.label_masks,
+            self.class_names,
+        ) = self._preprocess_inputs()
         self.train_loaders = self._make_train_loaders()
         self.inference_loaders = self._make_inference_loaders()
         self.model, self.optimizer = self._init_model()
+
+        self.gradients = {name: [] for name in dict(self.model.named_parameters())}
 
     def _parse_config(self, config):
         cp = ConfigParser(config)
@@ -60,7 +73,10 @@ class Trainer:
 
     def _preprocess_inputs(self):
         preprocessor = Preprocessor(
-            self.params.names, delimiter=self.params.delimiter, svd_dim=self.params.svd_dim,
+            self.params.net_names,
+            label_names=self.params.label_names,
+            delimiter=self.params.delimiter,
+            svd_dim=self.params.svd_dim,
         )
         return preprocessor.process()
 
@@ -68,10 +84,10 @@ class Trainer:
         return [
             NeighborSamplerWithWeights(
                 ad,
-                sizes=[10] * self.params.gat_shapes["n_layers"],
+                sizes=[max(30 - idx * 5, 5) for idx in range(self.params.gat_shapes["n_layers"])],
                 batch_size=self.params.batch_size,
-                shuffle=False,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
+                shuffle=False,
             )
             for ad in self.adj
         ]
@@ -82,24 +98,31 @@ class Trainer:
                 ad,
                 sizes=[-1] * self.params.gat_shapes["n_layers"],  # all neighbors
                 batch_size=1,
-                shuffle=False,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
+                shuffle=False,
             )
             for ad in self.adj
         ]
 
     def _init_model(self):
+
+        if self.labels:
+            n_classes = [label.shape[1] for label in self.labels]
+        else:
+            n_classes = None
+
         model = Bionic(
             len(self.index),
             self.params.gat_shapes,
             self.params.embedding_size,
             len(self.adj),
             svd_dim=self.params.svd_dim,
+            shared_encoder=self.params.shared_encoder,
+            n_classes=n_classes,
         )
         model.apply(self._init_model_weights)
 
         # Load pretrained model
-        # TODO: refactor this
         if self.params.load_pretrained_model:
             typer.echo("Loading pretrained model...")
             model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
@@ -126,8 +149,6 @@ class Trainer:
     def train(self, verbosity: Optional[int] = 1):
         """Trains BIONIC model.
 
-        TODO: this should be refactored
-
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
         """
@@ -143,8 +164,11 @@ class Trainer:
 
             time_start = time.time()
 
-            # Track average loss across batches.
-            epoch_losses = np.zeros(len(self.adj))
+            # Track average loss across batches
+            if self.labels is not None:
+                epoch_losses = np.zeros(len(self.adj) + len(self.labels))
+            else:
+                epoch_losses = np.zeros(len(self.adj))
 
             if bool(self.params.sample_size):
                 rand_net_idxs = np.random.permutation(len(self.adj))
@@ -155,6 +179,10 @@ class Trainer:
                     _, losses = self._train_step(rand_idxs)
                     for idx, loss in zip(rand_idxs, losses):
                         epoch_losses[idx] += loss
+
+                    # Add classification losses if applicable
+                    for idx, loss in enumerate(losses[len(rand_idxs) :]):
+                        epoch_losses[len(rand_idxs) + idx] = loss
 
             else:
                 _, losses = self._train_step()
@@ -189,7 +217,6 @@ class Trainer:
                     "best_loss": best_loss,
                 }
                 best_state = state
-                # torch.save(state, f'checkpoints/{self.params.out_name}_model.pt')
 
         if self.params.use_tensorboard:
             self.writer.close()
@@ -221,43 +248,73 @@ class Trainer:
                 batch_features = self.features
 
         # List of losses.
-        losses = [0.0 for _ in range(len(batch_loaders))]
+        if self.labels is not None:
+            losses = [0.0 for _ in range(len(batch_loaders) + len(self.labels))]
+        else:
+            losses = [0.0 for _ in range(len(batch_loaders))]
 
         # Get the data flow for each input, stored in a tuple.
         for batch_masks, node_ids, *data_flows in zip(mask_splits, int_splits, *batch_loaders):
 
             self.optimizer.zero_grad()
+
+            # Subset supervised labels and masks if provided
+            if self.labels is not None:
+                batch_labels = [labels[node_ids, :] for labels in self.labels]
+                batch_labels_masks = [label_masks[node_ids] for label_masks in self.label_masks]
+
             if bool(self.params.sample_size):
                 training_datasets = [self.adj[i] for i in rand_net_idx]
-                output, _, _, _ = self.model(
+                output, _, _, _, label_preds = self.model(
                     training_datasets,
                     data_flows,
                     batch_features,
                     batch_masks,
                     rand_net_idxs=rand_net_idx,
                 )
-                curr_losses = [
+                recon_losses = [
                     masked_scaled_mse(
-                        output, self.adj[i], self.weights[i], node_ids, batch_masks[:, j]
+                        output,
+                        self.adj[i],
+                        self.weights[i],
+                        node_ids,
+                        batch_masks[:, j],
+                        self.params.lambda_,
                     )
                     for j, i in enumerate(rand_net_idx)
                 ]
             else:
                 training_datasets = self.adj
-                output, _, _, _ = self.model(
+                output, _, _, _, label_preds = self.model(
                     training_datasets, data_flows, batch_features, batch_masks
                 )
-                curr_losses = [
+                recon_losses = [
                     masked_scaled_mse(
-                        output, self.adj[i], self.weights[i], node_ids, batch_masks[:, i]
+                        output,
+                        self.adj[i],
+                        self.weights[i],
+                        node_ids,
+                        batch_masks[:, i],
+                        self.params.lambda_,
                     )
                     for i in range(len(self.adj))
                 ]
 
-            losses = [loss + curr_loss for loss, curr_loss in zip(losses, curr_losses)]
-            loss_sum = sum(curr_losses)
-            loss_sum.backward()
+            if label_preds is not None:
+                cls_losses = [
+                    classification_loss(pred, label, label_mask, self.params.lambda_)
+                    for pred, label, label_mask in zip(
+                        label_preds, batch_labels, batch_labels_masks
+                    )
+                ]
+                curr_losses = recon_losses + cls_losses
+                losses = [loss + curr_loss for loss, curr_loss in zip(losses, curr_losses)]
+                loss_sum = sum(curr_losses)
+            else:
+                losses = [loss + curr_loss for loss, curr_loss in zip(losses, recon_losses)]
+                loss_sum = sum(recon_losses)
 
+            loss_sum.backward()
             self.optimizer.step()
 
         return output, losses
@@ -275,36 +332,40 @@ class Trainer:
         )
         if len(self.adj) <= 10:
             for i, loss in enumerate(epoch_losses):
-                progress_string += f"{cyan(f'Loss {i + 1}')}: {loss:.6f} {sep} "
+                if self.labels is not None and i >= len(self.adj):
+                    progress_string += (
+                        f"{cyan(f'ClsLoss {i + 1 - len(self.adj)}')}: {loss:.6f} {sep} "
+                    )
+                else:
+                    progress_string += f"{cyan(f'Loss {i + 1}')}: {loss:.6f} {sep} "
         progress_string += f"{cyan('Time (s)')}: {time.time() - time_start:.4f}"
         return progress_string
 
-    def forward(self, verbosity: Optional[int] = 1):
+    def forward(self, verbosity: int = 1):
         """Runs the forward pass on the trained BIONIC model.
-
-        TODO: this should be refactored
 
         Args:
             verbosity (int): 0 to supress printing (except for progress bar), 1 for regular printing.
         """
+
         # Begin inference
-        self.model.load_state_dict(
-            self.best_state["state_dict"]
-        )  # Recover model with lowest reconstruction loss
-        if verbosity:
-            typer.echo(
-                (
-                    f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
-                    f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+        if self.labels is None:
+            self.model.load_state_dict(
+                self.best_state["state_dict"]
+            )  # Recover model with lowest reconstruction loss if no classification objective
+            if verbosity:
+                typer.echo(
+                    (
+                        f"""Loaded best model from epoch {magenta(f"{self.best_state['epoch']}")} """
+                        f"""with loss {magenta(f"{self.best_state['best_loss']:.6f}")}"""
+                    )
                 )
-            )
 
         self.model.eval()
         StatefulSampler.step(len(self.index), random=False)
         emb_list = []
 
         # Build embedding one node at a time
-        # TODO: add verbosity control
         with typer.progressbar(
             zip(self.masks, self.index, *self.inference_loaders),
             label=f"{cyan('Forward Pass')}:",
@@ -312,14 +373,13 @@ class Trainer:
         ) as progress:
             for mask, idx, *data_flows in progress:
                 mask = mask.reshape((1, -1))
-                dot, emb, _, learned_scales = self.model(
+                dot, emb, _, learned_scales, label_preds = self.model(
                     self.adj, data_flows, self.features, mask, evaluate=True
                 )
                 emb_list.append(emb.detach().cpu().numpy())
         emb = np.concatenate(emb_list)
         emb_df = pd.DataFrame(emb, index=self.index)
         emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
-        # emb_df.to_csv(extend_path(self.params.out_name, "_features.csv"))
 
         # Free memory (necessary for sequential runs)
         if Device() == "cuda":
@@ -334,7 +394,10 @@ class Trainer:
             if verbosity:
                 typer.echo("Plotting loss...")
             plot_losses(
-                self.train_loss, self.params.names, extend_path(self.params.out_name, "_loss.png")
+                self.train_loss,
+                self.params.net_names,
+                extend_path(self.params.out_name, "_loss.png"),
+                self.params.label_names,
             )
 
         # Save model
@@ -348,10 +411,29 @@ class Trainer:
             if verbosity:
                 typer.echo("Saving network scales...")
             learned_scales = pd.DataFrame(
-                learned_scales.detach().cpu().numpy(), columns=self.params.names
+                learned_scales.detach().cpu().numpy(), columns=self.params.net_names
             ).T
             learned_scales.to_csv(
                 extend_path(self.params.out_name, "_network_weights.tsv"), header=False, sep="\t"
             )
+
+        # Save label predictions
+        if self.params.save_label_predictions:
+            if verbosity:
+                typer.echo("Saving predicted labels...")
+            if self.params.label_names is None:
+                warnings.warn(
+                    "The `label_names` parameter was not provided so there are "
+                    "no predicted labels to save."
+                )
+            else:
+                for pred, class_names, standard_name in zip(
+                    label_preds, self.class_names, self.params.label_names
+                ):
+                    pred_df = pd.DataFrame(pred, index=self.index, columns=class_names)
+                    pred_df.to_csv(
+                        extend_path(self.params.out_name, f"_{standard_name.name}_predictions.tsv"),
+                        sep="\t",
+                    )
 
         typer.echo(magenta("Complete!"))

@@ -1,0 +1,20 @@
+{
+  "net_names": [
+    "bionic/inputs/Hein-2015.txt",
+    "bionic/inputs/Huttlin-2015.txt",
+    "bionic/inputs/Huttlin-2017.txt",
+    "bionic/inputs/Rolland-2014.txt"
+  ],
+  "out_name": "bionic/outputs/human_ppi",
+  "epochs": 2123,
+  "batch_size": 2048,
+  "learning_rate": 0.0005830944755717023,
+  "gat_shapes": {
+    "dimension": 68,
+    "n_heads": 10,
+    "n_layers": 3
+  },
+  "svd_dim": 1024,
+  "embedding_size": 512,
+  "save_model": false
+}

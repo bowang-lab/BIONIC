@@ -4,8 +4,6 @@
 name: Python package
 
 on:
-  # push:
-  #   branches: [master]
   pull_request:
     branches: [master]
 
@@ -17,7 +15,7 @@ jobs:
         python-version: [3.8]
         poetry-version: [1.0.10]
         os: [ubuntu-latest, windows-latest]
-        cuda: [cpu, cu92, cu101, cu102]
+        cuda: [cpu, cu102, cu111]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -36,15 +34,6 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
 
-      #     - name: Cache Poetry virtualenv
-      #       uses: actions/cache@v2
-      #       id: cache
-      #       with:
-      #         path: ~/.virtualenvs
-      #         key: poetry-${{ hashFiles('**/poetry.lock') }}
-      #         restore-keys: |
-      #           poetry-${{ hashFiles('**/poetry.lock') }}
-
       - if: matrix.os == 'ubuntu-latest'
         name: Set Poetry config (linux)
         run: |
@@ -56,55 +45,33 @@ jobs:
         run: |
           poetry config virtualenvs.in-project false
 
-      - if: matrix.os == 'ubuntu-latest' && matrix.cuda != 'cu102'
+      - if: matrix.os == 'ubuntu-latest'
         name: Add PyTorch and PyG dependencies (linux)
         run: |
-          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
-          poetry add torch-geometric=1.6.1
+          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.9.0%2B${{ matrix.cuda }}-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_cluster-1.5.9-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_scatter-2.0.8-cp38-cp38-linux_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_sparse-0.6.11-cp38-cp38-linux_x86_64.whl
+          poetry add torch-geometric=1.7.2
 
-      - if: matrix.os == 'ubuntu-latest' && matrix.cuda == 'cu102'
-        name: Add PyTorch and PyG dependencies (linux, cuda 10.2)
-        run: |
-          poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-linux_x86_64.whl
-          poetry add torch-geometric=1.6.1
-
-      - if: matrix.os == 'windows-latest' && matrix.cuda != 'cu102' && matrix.cuda != 'cu92'
+      - if: matrix.os == 'windows-latest'
         name: Add PyTorch and PyG dependencies (windows)
         run: |
-          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.6.0%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
-          poetry add torch-geometric=1.6.1
+          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.9.0%2B${{ matrix.cuda }}-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_cluster-1.5.9-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_scatter-2.0.8-cp38-cp38-win_amd64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_sparse-0.6.11-cp38-cp38-win_amd64.whl
+          poetry add torch-geometric=1.7.2
 
-      - if: matrix.os == 'windows-latest' && matrix.cuda == 'cu102' && matrix.cuda != 'cu92'
-        name: Add PyTorch and PyG dependencies (windows, cuda 10.2)
-        run: |
-          poetry add https://download.pytorch.org/whl/cu102/torch-1.6.0-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-latest%2Bcu102-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-latest%2Bcu102-cp38-cp38-win_amd64.whl
-          poetry add https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-latest%2Bcu102-cp38-cp38-win_amd64.whl
-          poetry add torch-geometric=1.6.1
-
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Install dependencies
+      - name: Install dependencies
         run: |
           poetry install
-      #       if: steps.cache.outputs.cache-hit != 'true'
 
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Format with Black
+      - name: Format with Black
         run: |
           poetry run black .
 
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Lint with flake8
+      - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -116,17 +83,14 @@ jobs:
         run: |
           poetry run pytest
 
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Build wheel
+      - name: Build wheel
         run: |
           poetry build
 
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Rename wheel
+      - name: Rename wheel
         run: python build/rename_wheel.py --os ${{ matrix.os }} --cuda ${{ matrix.cuda }}
 
-      - if: matrix.os != 'windows-latest' || matrix.cuda != 'cu92'
-        name: Upload wheel
+      - name: Upload wheel
         uses: actions/upload-artifact@v2
         with:
           path: dist/*.whl

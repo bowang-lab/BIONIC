@@ -34,18 +34,18 @@ class TestConfigParser:
         cp = ConfigParser(config_no_outname_path)
         assert cp.config["out_name"] == config_no_outname_path.parent / config_no_outname_path.stem
 
-    def test_names_field_is_provided(self):
+    def test_net_names_field_is_provided(self):
         mock_config_without_names = mock_config.copy()
-        del mock_config_without_names["names"]
+        del mock_config_without_names["net_names"]
         with pytest.raises(ValueError):
             ConfigParser(mock_config_without_names)
 
-    def test_asterisk_in_names_fetches_filenames(self):
+    def test_asterisk_in_net_names_fetches_filenames(self):
         mock_config_asterisk_names = mock_config.copy()
-        mock_config_asterisk_names["names"] = "*"
+        mock_config_asterisk_names["net_names"] = "*"
         cp = ConfigParser(mock_config_asterisk_names)
         params = cp.parse()
-        assert isinstance(params.names, list)
+        assert isinstance(params.net_names, list)
 
     def test_config_fields_replace_defaults(self):
         cp = ConfigParser(mock_config)
