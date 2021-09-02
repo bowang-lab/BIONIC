@@ -5,9 +5,6 @@ from torch import Tensor
 from ..utils.common import Device
 
 
-recon_criterion = nn.MSELoss(reduction="none")
-
-
 def masked_scaled_mse(
     output: Tensor, target: Tensor, weight: Tensor, node_ids: Tensor, mask: Tensor, lambda_: float,
 ) -> Tensor:
@@ -18,7 +15,7 @@ def masked_scaled_mse(
     target = target.to(Device())
     target = target.adj_t[node_ids, node_ids].to_dense()
 
-    loss = lambda_ * weight * (mask * recon_criterion(output, target)).mean()
+    loss = lambda_ * weight * torch.mean(mask.reshape((-1, 1)) * (output - target) ** 2 * mask)
 
     return loss
 

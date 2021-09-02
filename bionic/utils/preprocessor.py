@@ -16,7 +16,7 @@ from .common import magenta, Device
 from torch import Tensor
 from torch_geometric.transforms import ToSparseTensor
 from torch_sparse import SparseTensor
-from torch_geometric.utils import from_networkx
+from torch_geometric.utils import from_networkx, is_undirected
 
 
 class Preprocessor:
