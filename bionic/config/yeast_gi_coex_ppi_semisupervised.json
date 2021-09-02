@@ -1,13 +1,13 @@
 {
   "net_names": [
-    "bionic/inputs/Costanzo.txt",
-    "bionic/inputs/Hu.txt",
-    "bionic/inputs/Krogan.txt"
+    "bionic/inputs/Costanzo-2016.txt",
+    "bionic/inputs/Hu-2007.txt",
+    "bionic/inputs/Krogan-2006.txt"
   ],
   "label_names": [
-    "/h/forsterd/BIONIC-v2/BIONIC/bionic/inputs/yeast_complex_labels.json"
+    "/h/forsterd/BIONIC-v2/BIONIC/bionic/inputs/yeast_IntAct_complex_labels.json"
   ],
-  "out_name": "bionic/outputs/costanzo_hu_krogan_semisupervised",
+  "out_name": "bionic/outputs/yeast_gi_coex_ppi_semisupervised",
   "epochs": 2123,
   "batch_size": 2048,
   "learning_rate": 0.0005830944755717023,
