@@ -6,7 +6,7 @@
 **Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v1)!**
 
 ## :boom: Introduction
-BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that extends the graph convolutional network (GCN) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in number of networks and network size.
+BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that incorporates graph convolutional networks (GCNs) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in the number of networks and network size.
 
 An overview of BIONIC can be seen below.
 
@@ -15,14 +15,14 @@ An overview of BIONIC can be seen below.
 </p>
 
 1. Multiple networks are input into BIONIC
-2. Each network is passed through its own graph convolutional encoder where network-specific gene features are learned based the network topologies. These features are summed to produce integrated gene features which capture topological information across input networks. The integrated features can then be used for downstream tasks, such as gene co-annotation prediction, module detection (via clustering) and gene function prediction (via classification).
-3. In order to train and optimize the integrated gene features, BIONIC first decodes the integrated features into a reconstruction of the input networks (**a**) and, if labelled data is available for some of the genes (such as protein complex membership, Gene Ontology annotations, etc.), BIONIC can also attempt to predict these functional labels (**b**). Note that any amount of labelled data can be used, from none (fully unsupervised), to labels for every gene, and anything in between.
+2. Each network is passed through its own graph convolutional encoder where network-specific gene (node) features are learned based the network topologies. These features can be passed through the encoder multiple times to produce gene features which incorporate higher-order neighborhoods. These features are summed to produce integrated gene features which capture topological information across input networks. The integrated features can then be used for downstream tasks, such as gene co-annotation prediction, module detection (via clustering) and gene function prediction (via classification).
+3. In order to train and optimize the integrated gene features, BIONIC first decodes the integrated features into a reconstruction of the input networks (**a**) and, if labelled data is available for some of the genes (such as protein complex membership, Gene Ontology annotations, etc.), BIONIC can also attempt to predict these functional labels (**b**). Note that any amount of labelled data can be used, from none (fully unsupervised), to labels for every gene, and everything in between.
 4. BIONIC then minimizes the difference between the network reconstruction and the input networks (i.e. reconstruction error) by updating its weights to learn gene features that capture relevant topological information (**a**) and, if labelled data is provided, BIONIC updates its weights to minimizes the difference between the label predictions and true labels (**b**). 
 
 ## :gear: Installation
 - BIONIC is implemented in [Python 3.8](https://www.python.org/downloads/) and uses [PyTorch](https://pytorch.org/) and [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric).
 
-- BIONIC can run on the CPU or GPU. The CPU distribution will get you up and running quickly, but the GPU distributions are significantly faster for large models (when run on a GPU).
+- BIONIC can run on the CPU or GPU. The CPU distribution will get you up and running quickly, but the GPU distributions are significantly faster for large models (when run on a GPU), and are recommended.
 
 We provide wheels for the different versions of BIONIC, CUDA, and operating systems as follows:
 
