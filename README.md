@@ -47,7 +47,7 @@ Windows | ✔️ |  | ✔️ | ✔️ |
 
 If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure you have a CUDA capable GPU and the [drivers](https://www.nvidia.com/download/index.aspx?lang=en-us) for your GPU are up to date. Then, if you don't have CUDA installed and configured on your system already, [download](https://developer.nvidia.com/cuda-toolkit), install and configure a BIONIC compatible CUDA version. Nvidia provides detailed instructions on how to do this for both [Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [Windows](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html). 
 
-### Installing from wheel (recommended)
+### Installing from wheel (recommended for general use)
 
 1. Before installing BIONIC, it is recommended you create a virutal Python **3.8** environment using tools like the built in `venv` command, or [Anaconda](https://docs.anaconda.com/anaconda/user-guide/getting-started/).
 
@@ -69,7 +69,7 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
        
     You should see a help message. 
 
-### Installing using Poetry
+### Installing using Poetry (recommended for development)
 
 1. If you don't already have it, [install Poetry](https://python-poetry.org/docs/#installation).
 
