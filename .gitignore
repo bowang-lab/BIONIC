@@ -5,6 +5,7 @@ bionic/utils/__pycache__/
 bionic/outputs/*
 dist/
 bionic.egg-info/
+activate.sh
 
 !.gitkeep
 !src/outputs/features/.gitkeep
