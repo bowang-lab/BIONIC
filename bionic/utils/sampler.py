@@ -64,7 +64,8 @@ class NeighborSamplerWithWeights(NeighborSampler):
         data = data.to("cpu")
         row, col, edge_attr = data.adj_t.t().coo()
         edge_index = torch.stack([row, col], dim=0)
-        self.weights = data.edge_weight
+        data.edge_index = edge_index
+        self.weights = edge_attr
         super().__init__(edge_index, *args, **kwargs)
 
     def sample(self, batch):
