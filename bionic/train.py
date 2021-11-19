@@ -364,6 +364,7 @@ class Trainer:
         self.model.eval()
         StatefulSampler.step(len(self.index), random=False)
         emb_list = []
+        prediction_lists = [[] for _ in self.labels] if self.labels is not None else None
 
         # Build embedding one node at a time
         with typer.progressbar(
@@ -377,6 +378,11 @@ class Trainer:
                     self.adj, data_flows, self.features, mask, evaluate=True
                 )
                 emb_list.append(emb.detach().cpu().numpy())
+                
+                if label_preds is not None:
+                    for i, pred in enumerate(label_preds):
+                        prediction_lists[i].append(torch.sigmoid(pred).detach().cpu().numpy())
+
         emb = np.concatenate(emb_list)
         emb_df = pd.DataFrame(emb, index=self.index)
         emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
@@ -419,6 +425,7 @@ class Trainer:
 
         # Save label predictions
         if self.params.save_label_predictions:
+
             if verbosity:
                 typer.echo("Saving predicted labels...")
             if self.params.label_names is None:
@@ -427,13 +434,11 @@ class Trainer:
                     "no predicted labels to save."
                 )
             else:
-                for pred, class_names, standard_name in zip(
-                    label_preds, self.class_names, self.params.label_names
-                ):
-                    pred_df = pd.DataFrame(pred, index=self.index, columns=class_names)
-                    pred_df.to_csv(
-                        extend_path(self.params.out_name, f"_{standard_name.name}_predictions.tsv"),
-                        sep="\t",
+                for i, (pred, class_names) in enumerate(zip(prediction_lists, self.class_names)):
+                    pred = np.concatenate(pred)
+                    pred = pd.DataFrame(pred, index=self.index, columns=class_names)
+                    pred.to_csv(
+                        extend_path(self.params.out_name, f"_label_set_{i+1}_predictions.tsv"), sep="\t"
                     )
 
         typer.echo(magenta("Complete!"))
