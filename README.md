@@ -26,7 +26,7 @@ An overview of BIONIC can be seen below.
 
 We provide wheels for the different versions of BIONIC, CUDA, and operating systems as follows:
 
-**BIONIC 0.2.0 (Latest, Recommended)**
+**BIONIC 0.2.1 (Latest, Recommended)**
 
 <i></i> | `cpu` | `cu92` | `cu101` | `cu102` | `cu111`
 --- | --- | --- | --- | --- | ---
@@ -55,11 +55,11 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
 
        $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v${VERSION}/bionic_model-${VERSION}+${CUDA}-cp38-cp38-${OS}.whl
 
-    where `${VERSION}`, `${CUDA}` and `${OS}` correspond to the BIONIC version (latest is `0.2.0`), valid CUDA version (as specified above), and operating system, respectively. `${OS}` takes a value of `linux_x86_64` for Linux, and `win_amd64` for Windows. 
+    where `${VERSION}`, `${CUDA}` and `${OS}` correspond to the BIONIC version (latest is `0.2.1`), valid CUDA version (as specified above), and operating system, respectively. `${OS}` takes a value of `linux_x86_64` for Linux, and `win_amd64` for Windows. 
     
     For example, if we wanted to install the latest version of BIONIC to run on the CPU on a Linux system, we would run
     
-       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.0/bionic_model-0.2.0+cpu-cp38-cp38-linux_x86_64.whl
+       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.1/bionic_model-0.2.1+cpu-cp38-cp38-linux_x86_64.whl
 
     **NOTE:** There is a [known bug](https://github.com/pypa/pip/issues/7626) in certain versions of `pip` which may result in a `No matching distribution` error. If this occurs, install `pip==19.3.1` and try again.
 
