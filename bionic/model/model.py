@@ -94,7 +94,12 @@ class Bionic(nn.Module):
 
         # Supervised classification head
         if self.n_classes:
-            self.cls_heads = [nn.Linear(self.emb_size, n_classes_) for n_classes_ in self.n_classes]
+            self.cls_heads = [
+                nn.Sequential(
+                    nn.Linear(self.emb_size, self.emb_size),  # improves optimization
+                    nn.Linear(self.emb_size, n_classes_)
+                ) for n_classes_ in self.n_classes
+            ]
             for h, cls_head in enumerate(self.cls_heads):
                 self.add_module(f"Classification_Head_{h}", cls_head)
         else:

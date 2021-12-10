@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bionic-model"
-version = "0.2.0"
+version = "0.2.1"
 description = "Biological network integration using convolutions."
 authors = ["Duncan Forster <duncan.forster@mail.utoronto.ca>"]
 license = "MIT"
@@ -29,7 +29,7 @@ numba = "0.49.0"
 numpy = "1.18.1"
 olefile = "0.46"
 pandas = "1.0.3"
-Pillow = "8.2.0"
+Pillow = "8.3.2"
 plyfile = "0.7.2"
 pycparser = "2.20"
 pyparsing = "2.4.7"
