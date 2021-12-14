@@ -3,7 +3,7 @@
 ![Top language](https://img.shields.io/github/languages/top/bowang-lab/BIONIC)
 ![License](https://img.shields.io/github/license/bowang-lab/BIONIC)
 
-**Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v1)!**
+**Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v2)!**
 
 ## :boom: Introduction
 BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that incorporates graph convolutional networks (GCNs) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in the number of networks and network size.
