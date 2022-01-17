@@ -26,7 +26,7 @@ An overview of BIONIC can be seen below.
 
 We provide wheels for the different versions of BIONIC, CUDA, and operating systems as follows:
 
-**BIONIC 0.2.1 (Latest, Recommended)**
+**BIONIC 0.2.0+ (Latest is 0.2.2, Recommended)**
 
 <i></i> | `cpu` | `cu92` | `cu101` | `cu102` | `cu111`
 --- | --- | --- | --- | --- | ---
