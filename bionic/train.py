@@ -58,17 +58,32 @@ class Trainer:
         self.inference_loaders = self._make_inference_loaders()
         self.model, self.optimizer = self._init_model()
 
-        self.gradients = {name: [] for name in dict(self.model.named_parameters())}
-
     def _parse_config(self, config):
         cp = ConfigParser(config)
         return cp.parse()
 
     def _init_tensorboard(self):
-        if self.params.use_tensorboard:
+        if self.params.tensorboard and (
+            self.params.tensorboard["training"] or self.params.tensorboard["embedding"]
+        ):
             from torch.utils.tensorboard import SummaryWriter
 
-            return SummaryWriter(flush_secs=10)
+            typer.secho("Using TensorBoard logging", fg=typer.colors.GREEN)
+            log_dir = (
+                None
+                if "log_dir" not in self.params.tensorboard
+                else self.params.tensorboard["log_dir"]
+            )
+            comment = (
+                ""
+                if "comment" not in self.params.tensorboard
+                else self.params.tensorboard["comment"]
+            )
+            return SummaryWriter(
+                log_dir=log_dir,
+                comment=comment,
+                flush_secs=10,
+            )
         return None
 
     def _preprocess_inputs(self):
@@ -197,14 +212,24 @@ class Trainer:
                 typer.echo(progress_string)
 
             # Add loss data to tensorboard visualization
-            if self.params.use_tensorboard:
-                if len(self.adj) <= 10:
-                    writer_dct = {name: loss for name, loss in zip(self.names, epoch_losses)}
-                    writer_dct["Total"] = sum(epoch_losses)
-                    self.writer.add_scalars("Reconstruction Errors", writer_dct, epoch)
+            if self.writer and self.params.tensorboard["training"]:
 
-                else:
-                    self.writer.add_scalar("Total Reconstruction Error", sum(epoch_losses), epoch)
+                recon_loss_dct = {}
+                cls_loss_dct = {}
+                for i, loss in enumerate(epoch_losses):
+                    if self.labels is not None and i >= len(self.adj):
+                        name = self.params.label_names[i - len(self.adj)].stem
+                        cls_loss_dct[name] = loss
+                    else:
+                        name = self.params.net_names[i].stem
+                        recon_loss_dct[name] = loss
+
+                recon_loss_dct["Total"] = sum(recon_loss_dct.values())
+                cls_loss_dct["Total"] = sum(cls_loss_dct.values())
+
+                self.writer.add_scalars("Reconstruction Loss", recon_loss_dct, epoch)
+                if cls_loss_dct:
+                    self.writer.add_scalars("Classification Loss", cls_loss_dct, epoch)
 
             train_loss.append(epoch_losses)
 
@@ -218,14 +243,13 @@ class Trainer:
                 }
                 best_state = state
 
-        if self.params.use_tensorboard:
+        if self.writer:
             self.writer.close()
 
         self.train_loss, self.best_state = train_loss, best_state
 
     def _train_step(self, rand_net_idx=None):
-        """Defines training behaviour.
-        """
+        """Defines training behaviour."""
 
         # Get random integers for batch.
         rand_int = StatefulSampler.step(len(self.index))
@@ -322,8 +346,7 @@ class Trainer:
     def _create_progress_string(
         self, epoch: int, epoch_losses: List[float], time_start: float
     ) -> str:
-        """Creates a training progress string to display.
-        """
+        """Creates a training progress string to display."""
         sep = magenta("|")
 
         progress_string = (
@@ -378,7 +401,7 @@ class Trainer:
                     self.adj, data_flows, self.features, mask, evaluate=True
                 )
                 emb_list.append(emb.detach().cpu().numpy())
-                
+
                 if label_preds is not None:
                     for i, pred in enumerate(label_preds):
                         prediction_lists[i].append(torch.sigmoid(pred).detach().cpu().numpy())
@@ -392,8 +415,10 @@ class Trainer:
             torch.cuda.empty_cache()
 
         # Create visualization of integrated features using tensorboard projector
-        if self.params.use_tensorboard:
-            self.writer.add_embedding(emb, metadata=self.index)
+        if self.writer and self.params.tensorboard["embedding"]:
+            if verbosity:
+                typer.echo("Saving TensorBoard projector embedding...")
+            self.writer.add_embedding(emb, metadata=self.index, tag=self.params.out_name.stem)
 
         # Output loss plot
         if self.params.plot_loss:
@@ -438,7 +463,8 @@ class Trainer:
                     pred = np.concatenate(pred)
                     pred = pd.DataFrame(pred, index=self.index, columns=class_names)
                     pred.to_csv(
-                        extend_path(self.params.out_name, f"_label_set_{i+1}_predictions.tsv"), sep="\t"
+                        extend_path(self.params.out_name, f"_label_set_{i+1}_predictions.tsv"),
+                        sep="\t",
                     )
 
         typer.echo(magenta("Complete!"))

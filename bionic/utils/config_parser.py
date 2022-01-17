@@ -6,8 +6,7 @@ from argparse import Namespace
 
 
 class DefaultConfig:
-    """Defines the default BIONIC config parameters.
-    """
+    """Defines the default BIONIC config parameters."""
 
     # Default config parameters used unless specified by user
     _defaults = {
@@ -33,7 +32,12 @@ class DefaultConfig:
         "save_model": False,  # Whether to save the trained model or not
         "save_label_predictions": False,  # Whether to save supervised label predictions
         "load_pretrained_model": False,  # Whether to load a pretrained model TODO
-        "use_tensorboard": False,  # Whether to output tensorboard data
+        "tensorboard": {
+            "training": False,  # Whether to use tensorboard to log training metrics
+            "embedding": False,  # Whether to use tensorflow embedding projector
+            "log_dir": None,  # Log directory, default is "runs"
+            "comment": "",  # Comment to add to tensorboard output file name
+        },
         "plot_loss": True,  # Whether to plot loss curves
     }
 

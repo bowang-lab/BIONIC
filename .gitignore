@@ -6,6 +6,10 @@ bionic/outputs/*
 dist/
 bionic.egg-info/
 activate.sh
+slurm*
+run_sbatch.sh
+*.whl
+bionic/runs/
 
 !.gitkeep
 !src/outputs/features/.gitkeep

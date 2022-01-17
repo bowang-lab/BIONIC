@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bionic-model"
-version = "0.2.1"
+version = "0.2.2"
 description = "Biological network integration using convolutions."
 authors = ["Duncan Forster <duncan.forster@mail.utoronto.ca>"]
 license = "MIT"
@@ -46,6 +46,7 @@ urllib3 = "1.26.5"
 pytest = "^6.0.1"
 typer = {extras = ["all"], version = "^0.3.1"}
 colorama = "^0.4.3"
+tensorboard = "^2.7.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
