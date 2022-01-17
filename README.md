@@ -130,7 +130,10 @@ Argument | Default | Description
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
 `save_label_predictions` | `false` | Whether to save the predicted node labels (if applicable).
 `save_model` | `true` | Whether to save the trained model parameters and state.
-`use_tensorboard` | `false` | Whether to output training data and feature embeddings to Tensorboard. NOTE: Tensorboard is not included in the default installation and must be installed seperately.
+`tensorboard.training` | `false` | Whether to output training progress to TensorBoard.
+`tensorboard.embedding` | `false` | Whether to embed learned feature with TensorBoard projector.
+`tensorboard.log_dir` | `null` | Output directory of TensorBoard logging files. Default is `"runs"`. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
+`tensorboard.comment` | `""` | Comment to add to TensorBoard output file name. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
 `plot_loss` | `true` | Whether to plot the model loss curves after training.
 
 By default, only the `net_names` key is required, though it is recommended you experiment with different hyperparameters to suit your needs.
@@ -155,6 +158,16 @@ To run BIONIC, do
     $ bionic path/to/your_config_file.json
 
 Results will be saved in the `out_name` directory as specified in the config file.
+
+### Viewing training progress and learned feature embeddings with TensorBoard
+
+By default, BIONIC will output loss curves at the end of training if `plot_loss` is set to `true` in the config. TensorBoard provides additional functionality over static loss plots (such as organizing different model runs, real-time training metrics, and interactive loss plots) and also allows for visualization of the learned features using [TensorFlow Projector](https://projector.tensorflow.org/).
+
+To use TensorBoard with BIONIC, specify `tensorboard.training` and/or `tensorboard.embedding` to be `true` in the config. You can view the training results by running 
+
+    $ tensorboard --logdir=path/to/log_files
+
+and navigating to http://localhost:6006/ in your browser. More information on running TensorBoard can be found [here](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html#run-tensorboard).
 
 ### Usage Tips
 
