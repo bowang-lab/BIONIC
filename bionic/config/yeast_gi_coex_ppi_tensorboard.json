@@ -1,0 +1,23 @@
+{
+  "net_names": [
+    "bionic/inputs/Costanzo-2016.txt",
+    "bionic/inputs/Hu-2007.txt",
+    "bionic/inputs/Krogan-2006.txt"
+  ],
+  "out_name": "bionic/outputs/yeast_gi_coex_ppi",
+  "epochs": 2123,
+  "batch_size": 2048,
+  "learning_rate": 0.0005830944755717023,
+  "gat_shapes": {
+    "dimension": 68,
+    "n_heads": 10,
+    "n_layers": 3
+  },
+  "embedding_size": 512,
+  "save_model": false,
+  "tensorboard": {
+    "training": true,
+    "embedding": true,
+    "comment": "tensorboard_example"
+  }
+}
