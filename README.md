@@ -136,7 +136,15 @@ Argument | Default | Description
 `tensorboard.comment` | `""` | Comment to add to TensorBoard output file name. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
 `plot_loss` | `true` | Whether to plot the model loss curves after training.
 
-By default, only the `net_names` key is required, though it is recommended you experiment with different hyperparameters to suit your needs.
+The `.` notation indicates a nested field, so `gat_shapes.dimension` (for example) becomes
+
+```
+gat_shapes: {
+    dimension: ${DIM_VALUE}
+}
+```
+
+in the config file. By default, only the `net_names` key is required, though it is recommended you experiment with different hyperparameters to suit your needs.
 
 ### Network Files
 
