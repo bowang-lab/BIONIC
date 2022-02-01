@@ -14,8 +14,13 @@ jobs:
       matrix:
         python-version: [3.8]
         poetry-version: [1.0.10]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-10.15, windows-latest]
         cuda: [cpu, cu102, cu111]
+        exclude:
+          - os: macos-10.15
+            cuda-version: 'cu102'
+          - os: macos-10.15
+            cuda-version: 'cu111'
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -40,6 +45,12 @@ jobs:
           poetry config virtualenvs.in-project false
           poetry config virtualenvs.path ~/.virtualenvs
 
+      - if: matrix.os == 'macos-10.15'
+        name: Set Poetry config (macOS)
+        run: |
+          poetry config virtualenvs.in-project false
+          poetry config virtualenvs.path ~/.virtualenvs
+
       - if: matrix.os == 'windows-latest'
         name: Set Poetry config (windows)
         run: |
@@ -52,6 +63,15 @@ jobs:
           poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_cluster-1.5.9-cp38-cp38-linux_x86_64.whl
           poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_scatter-2.0.8-cp38-cp38-linux_x86_64.whl
           poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_sparse-0.6.11-cp38-cp38-linux_x86_64.whl
+          poetry add torch-geometric=1.7.2
+
+      - if: matrix.os == 'macos-10.15'
+        name: Add PyTorch and PyG dependencies (macOS)
+        run: |
+          poetry add https://download.pytorch.org/whl/${{ matrix.cuda }}/torch-1.9.0%2B${{ matrix.cuda }}-cp38-cp38-macosx_10_14_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_cluster-1.5.9-cp38-cp38-macosx_10_14_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_scatter-2.0.8-cp38-cp38-macosx_10_14_x86_64.whl
+          poetry add https://pytorch-geometric.com/whl/torch-1.9.0%2B${{ matrix.cuda }}/torch_sparse-0.6.11-cp38-cp38-macosx_10_14_x86_64.whl
           poetry add torch-geometric=1.7.2
 
       - if: matrix.os == 'windows-latest'
