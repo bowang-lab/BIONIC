@@ -3,7 +3,7 @@
 ![Top language](https://img.shields.io/github/languages/top/bowang-lab/BIONIC)
 ![License](https://img.shields.io/github/license/bowang-lab/BIONIC)
 
-**Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v1)!**
+**Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v2)!**
 
 ## :boom: Introduction
 BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that incorporates graph convolutional networks (GCNs) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in the number of networks and network size.
@@ -26,7 +26,7 @@ An overview of BIONIC can be seen below.
 
 We provide wheels for the different versions of BIONIC, CUDA, and operating systems as follows:
 
-**BIONIC 0.2.1 (Latest, Recommended)**
+**BIONIC 0.2.0+ (Latest is 0.2.2, Recommended)**
 
 <i></i> | `cpu` | `cu92` | `cu101` | `cu102` | `cu111`
 --- | --- | --- | --- | --- | ---
@@ -130,10 +130,21 @@ Argument | Default | Description
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
 `save_label_predictions` | `false` | Whether to save the predicted node labels (if applicable).
 `save_model` | `true` | Whether to save the trained model parameters and state.
-`use_tensorboard` | `false` | Whether to output training data and feature embeddings to Tensorboard. NOTE: Tensorboard is not included in the default installation and must be installed seperately.
+`tensorboard.training` | `false` | Whether to output training progress to TensorBoard.
+`tensorboard.embedding` | `false` | Whether to embed learned feature with TensorBoard projector.
+`tensorboard.log_dir` | `null` | Output directory of TensorBoard logging files. Default is `"runs"`. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
+`tensorboard.comment` | `""` | Comment to add to TensorBoard output file name. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
 `plot_loss` | `true` | Whether to plot the model loss curves after training.
 
-By default, only the `net_names` key is required, though it is recommended you experiment with different hyperparameters to suit your needs.
+The `.` notation indicates a nested field, so `gat_shapes.dimension` (for example) becomes
+
+```
+gat_shapes: {
+    dimension: ${DIM_VALUE}
+}
+```
+
+in the config file. By default, only the `net_names` key is required, though it is recommended you experiment with different hyperparameters to suit your needs.
 
 ### Network Files
 
@@ -155,6 +166,16 @@ To run BIONIC, do
     $ bionic path/to/your_config_file.json
 
 Results will be saved in the `out_name` directory as specified in the config file.
+
+### Viewing training progress and learned feature embeddings with TensorBoard
+
+By default, BIONIC will output loss curves at the end of training if `plot_loss` is set to `true` in the config. TensorBoard provides additional functionality over static loss plots (such as organizing different model runs, real-time training metrics, and interactive loss plots) and also allows for visualization of the learned features using [TensorFlow Projector](https://projector.tensorflow.org/).
+
+To use TensorBoard with BIONIC, specify `tensorboard.training` and/or `tensorboard.embedding` to be `true` in the config. You can view the training results by running 
+
+    $ tensorboard --logdir=path/to/log_files
+
+and navigating to http://localhost:6006/ in your browser. More information on running TensorBoard can be found [here](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html#run-tensorboard).
 
 ### Usage Tips
 
