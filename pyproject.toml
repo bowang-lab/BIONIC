@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bionic-model"
-version = "0.2.2"
+version = "0.2.3"
 description = "Biological network integration using convolutions."
 authors = ["Duncan Forster <duncan.forster@mail.utoronto.ca>"]
 license = "MIT"
