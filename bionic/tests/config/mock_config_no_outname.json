@@ -5,7 +5,7 @@
   ],
   "epochs": 10,
   "batch_size": 64,
-  "learning_rate": 0.0003,
+  "learning_rate": 0.00001,
   "gat_shapes": {
     "dimension": 64,
     "n_heads": 10,
