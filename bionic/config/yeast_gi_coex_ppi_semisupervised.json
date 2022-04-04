@@ -17,7 +17,7 @@
     "n_layers": 3
   },
   "embedding_size": 512,
-  "lambda": 0.95,
+  "lambda": 0.05,
   "save_model": false,
   "save_label_predictions": true
 }

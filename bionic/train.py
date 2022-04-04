@@ -79,11 +79,7 @@ class Trainer:
                 if "comment" not in self.params.tensorboard
                 else self.params.tensorboard["comment"]
             )
-            return SummaryWriter(
-                log_dir=log_dir,
-                comment=comment,
-                flush_secs=10,
-            )
+            return SummaryWriter(log_dir=log_dir, comment=comment, flush_secs=10,)
         return None
 
     def _preprocess_inputs(self):
@@ -99,7 +95,7 @@ class Trainer:
         return [
             NeighborSamplerWithWeights(
                 ad,
-                sizes=[max(30 - idx * 5, 5) for idx in range(self.params.gat_shapes["n_layers"])],
+                sizes=[2 for _ in range(self.params.gat_shapes["n_layers"])],
                 batch_size=self.params.batch_size,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
                 shuffle=False,
