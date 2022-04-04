@@ -6,7 +6,7 @@
   "out_name": "bionic/tests/outputs/mock_integration",
   "epochs": 300,
   "batch_size": 10,
-  "learning_rate": 0.0005,
+  "learning_rate": 0.00001,
   "gat_shapes": {
     "dimension": 8,
     "n_heads": 1,
