@@ -16,7 +16,7 @@ from .common import magenta, Device
 from torch import Tensor
 from torch_geometric.transforms import ToSparseTensor
 from torch_sparse import SparseTensor
-from torch_geometric.utils import from_networkx, is_undirected
+from torch_geometric.utils import from_networkx
 
 
 class Preprocessor:
@@ -106,7 +106,9 @@ class Preprocessor:
                 G_max.edges()[e]["weight"] = max_weight
 
             svd = TruncatedSVD(n_components=self.svd_dim)
-            feat = torch.tensor(svd.fit_transform(nx.normalized_laplacian_matrix(G_max)))
+            feat = torch.tensor(
+                svd.fit_transform(nx.normalized_laplacian_matrix(G_max, weight="weight"))
+            )
 
         else:
             # Create feature matrix (identity).
