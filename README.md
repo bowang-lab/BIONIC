@@ -5,6 +5,8 @@
 
 **Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v2)!**
 
+You can explore the BIONIC integrated yeast features at https://bionicviz.com/.
+
 See [here](https://github.com/duncster94/BIONIC-evals) for the implementation of the co-annotation prediction, module detection, and gene function prediction evaluations.
 
 See [here](https://github.com/duncster94/BIONIC-analyses) for the implementation of the analyses used to generate the manuscript figures.
