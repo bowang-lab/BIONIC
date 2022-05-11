@@ -127,12 +127,13 @@ Argument | Default | Description
 `learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](#usage-tips)).
 `embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](#usage-tips)).
 `shared_encoder` | `false` | Whether to use the same graph attention layer (GAT) encoder for all the input networks. This may lead to better performance in certain circumstances.
-`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `2048` or higher can be a useful way to reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
+`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. As of v0.2.4 this is no longer required and is safely ignored.
 `initialization` | `"kaiming"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
 `lambda` | N/A | Relative weighting between reconstruction and classification loss: `final_loss = lambda * rec_loss + (1 - lambda) * cls_loss`. Only relevant if `label_names` is specified. If `lambda` is not provided but `label_names` is, `lambda` will deafult to `0.95`.
 `gat_shapes.dimension` | `64` | Dimensionality of each individual GAT head (see [**usage tips**](#usage-tips)).
 `gat_shapes.n_heads` | `10` | Number of attention heads for each network-specific GAT.
 `gat_shapes.n_layers` | `2` | Number of times each network is passed through its corresponding GAT. This number corresponds to the effective neighbourhood size of the convolution.
+`model_parallel` | `false` | Whether to distribute the model over multiple GPUs (i.e. model parallelism, not data parallelism). This is useful if you have many large networks and a highly parameterized model that will not fit on a single GPU.
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
 `save_label_predictions` | `false` | Whether to save the predicted node labels (if applicable).
 `save_model` | `true` | Whether to save the trained model parameters and state.
