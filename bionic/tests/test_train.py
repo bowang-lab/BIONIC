@@ -93,6 +93,48 @@ class TestTrain:
         trainer.train()
         trainer.forward()
 
+    def test_model_parallel_with_shared_encoder_completes(self):
+        if torch.cuda.is_available():
+            Device._device = "cuda"
+            assert Device() == "cuda"
+        mock_config_with_model_parallel = mock_config.copy()
+        mock_config_with_model_parallel["model_parallel"] = True
+        mock_config_with_model_parallel["shared_encoder"] = True
+        trainer = Trainer(mock_config_with_model_parallel)
+        trainer.train()
+        trainer.forward()
+
+    def test_model_parallel_with_no_gpu_completes(self):
+        if torch.cuda.device_count() > 0:
+            pytest.skip("CUDA device(s) found, skipping this test.")
+        mock_config_with_model_parallel = mock_config.copy()
+        mock_config_with_model_parallel["model_parallel"] = True
+        trainer = Trainer(mock_config_with_model_parallel)
+        trainer.train()
+        trainer.forward()
+
+    def test_model_parallel_with_one_gpu_completes(self):
+        if torch.cuda.device_count() != 1:
+            pytest.skip("More than or fewer than 1 CUDA device found, skipping this test.")
+        Device._device = "cuda"
+        assert Device() == "cuda"
+        mock_config_with_model_parallel = mock_config.copy()
+        mock_config_with_model_parallel["model_parallel"] = True
+        trainer = Trainer(mock_config_with_model_parallel)
+        trainer.train()
+        trainer.forward()
+
+    def test_model_parallel_with_multiple_gpus_completes(self):
+        if torch.cuda.device_count() < 2:
+            pytest.skip("Fewer than 2 CUDA devices found, skipping this test.")
+        Device._device = "cuda"
+        assert Device() == "cuda"
+        mock_config_with_model_parallel = mock_config.copy()
+        mock_config_with_model_parallel["model_parallel"] = True
+        trainer = Trainer(mock_config_with_model_parallel)
+        trainer.train()
+        trainer.forward()
+
     @pytest.fixture(autouse=True)
     def test_connected_regions_are_similar(self):
         """Tests that connected nodes have more similar features than disconnected nodes.

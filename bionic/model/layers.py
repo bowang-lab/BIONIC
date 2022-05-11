@@ -145,7 +145,9 @@ class Interp(nn.Module):
             (torch.FloatTensor([1.0 for _ in range(n_modalities)]) / n_modalities).reshape((1, -1))
         )
 
-    def forward(self, mask: Tensor, idxs: Tensor, evaluate: bool = False) -> Tuple[Tensor, Tensor]:
+    def forward(
+        self, mask: Tensor, idxs: Tensor, evaluate: bool = False, device=None
+    ) -> Tuple[Tensor, Tensor]:
 
         net_scales = F.softmax(self.net_scales / self.temperature, dim=-1)
         net_scales = net_scales[:, idxs]
@@ -155,7 +157,9 @@ class Interp(nn.Module):
         else:
             random_mask = torch.IntTensor(mask.shape).random_(0, 2).float()
 
-        random_mask = random_mask.to(Device())
+        if device is None:
+            device = Device()
+        random_mask = random_mask.to(device)
 
         mask_sum = 1 / (1 + torch.sum(random_mask, dim=-1)) ** 20
         random_mask += mask_sum.reshape((-1, 1))
