@@ -18,7 +18,7 @@ from .utils.plotter import plot_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
 from .utils.common import extend_path, cyan, magenta, Device
-from .model.model import Bionic
+from .model.model import Bionic, BionicParallel
 from .model.loss import masked_scaled_mse, classification_loss
 
 
@@ -122,7 +122,9 @@ class Trainer:
         else:
             n_classes = None
 
-        model = Bionic(
+        Model = BionicParallel if self.params.model_parallel else Bionic
+
+        model = Model(
             len(self.index),
             self.params.gat_shapes,
             self.params.embedding_size,
@@ -139,7 +141,8 @@ class Trainer:
             model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
 
         # Push model to device
-        model.to(Device())
+        if not self.params.model_parallel:
+            model.to(Device())
 
         optimizer = optim.Adam(model.parameters(), lr=self.params.learning_rate, weight_decay=0.0)
 
@@ -300,6 +303,7 @@ class Trainer:
                         node_ids,
                         batch_masks[:, j],
                         self.params.lambda_,
+                        device="cuda:0" if self.params.model_parallel else None,
                     )
                     for j, i in enumerate(rand_net_idx)
                 ]
@@ -316,6 +320,7 @@ class Trainer:
                         node_ids,
                         batch_masks[:, i],
                         self.params.lambda_,
+                        device="cuda:0" if self.params.model_parallel else None,
                     )
                     for i in range(len(self.adj))
                 ]
