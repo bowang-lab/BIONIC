@@ -5,6 +5,12 @@
 
 **Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v2)!**
 
+You can explore the BIONIC integrated yeast features at https://bionicviz.com/.
+
+See [here](https://github.com/duncster94/BIONIC-evals) for the implementation of the co-annotation prediction, module detection, and gene function prediction evaluations.
+
+See [here](https://github.com/duncster94/BIONIC-analyses) for the implementation of the analyses used to generate the manuscript figures.
+
 ## :boom: Introduction
 BIONIC (**Bio**logical **N**etwork **I**ntegration using **C**onvolutions) is a deep-learning based biological network integration algorithm that incorporates graph convolutional networks (GCNs) to learn integrated features for genes or proteins across input networks. BIONIC produces high-quality gene features and is scalable both in the number of networks and network size.
 
@@ -121,7 +127,7 @@ Argument | Default | Description
 `learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](#usage-tips)).
 `embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](#usage-tips)).
 `shared_encoder` | `false` | Whether to use the same graph attention layer (GAT) encoder for all the input networks. This may lead to better performance in certain circumstances.
-`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `1024` or `2048` can be a useful way to speed up training and reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
+`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. `0` indicates SVD is not applied. Setting this to `2048` or higher can be a useful way to reduce memory consumption (especially for integrations with many genes) while incurring a small reduction in feature quality.
 `initialization` | `"kaiming"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
 `lambda` | N/A | Relative weighting between reconstruction and classification loss: `final_loss = lambda * rec_loss + (1 - lambda) * cls_loss`. Only relevant if `label_names` is specified. If `lambda` is not provided but `label_names` is, `lambda` will deafult to `0.95`.
 `gat_shapes.dimension` | `64` | Dimensionality of each individual GAT head (see [**usage tips**](#usage-tips)).
