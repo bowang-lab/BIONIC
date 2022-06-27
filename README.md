@@ -2,6 +2,7 @@
 ![Version](https://img.shields.io/github/v/release/bowang-lab/BIONIC)
 ![Top language](https://img.shields.io/github/languages/top/bowang-lab/BIONIC)
 ![License](https://img.shields.io/github/license/bowang-lab/BIONIC)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762584.svg)](https://doi.org/10.5281/zenodo.6762584)
 
 **Check out the [preprint](https://www.biorxiv.org/content/10.1101/2021.03.15.435515v2)!**
 
