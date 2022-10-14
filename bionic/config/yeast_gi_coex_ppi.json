@@ -14,5 +14,6 @@
     "n_layers": 3
   },
   "embedding_size": 512,
-  "save_model": false
+  "save_model": false,
+  "model_parallel": true
 }

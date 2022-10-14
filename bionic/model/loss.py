@@ -6,13 +6,22 @@ from ..utils.common import Device
 
 
 def masked_scaled_mse(
-    output: Tensor, target: Tensor, weight: Tensor, node_ids: Tensor, mask: Tensor, lambda_: float,
+    output: Tensor,
+    target: Tensor,
+    weight: Tensor,
+    node_ids: Tensor,
+    mask: Tensor,
+    lambda_: float,
+    device=None,
 ) -> Tensor:
     """Masked and scaled MSE loss.
     """
 
+    if device is None:
+        device = Device()
+
     # Subset `target` to current batch and make dense
-    target = target.to(Device())
+    target = target.to(device)
     target = target.adj_t[node_ids, node_ids].to_dense()
 
     loss = lambda_ * weight * torch.mean(mask.reshape((-1, 1)) * (output - target) ** 2 * mask)

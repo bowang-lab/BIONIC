@@ -1,4 +1,5 @@
 import json
+import torch
 import warnings
 from pathlib import Path
 from typing import Union, List, Any
@@ -39,6 +40,7 @@ class DefaultConfig:
             "comment": "",  # Comment to add to tensorboard output file name
         },
         "plot_loss": True,  # Whether to plot loss curves
+        "model_parallel": False,  # Whether to distribute the model on multiple CUDA devices
     }
 
     # Required parameters not specified in `_defaults`
@@ -126,6 +128,26 @@ class ConfigParser(DefaultConfig):
                     return self._resolve_asterisk_path(value)
                 else:
                     return [value]  # Wrap path in a list to ensure compatibility
+
+            if param == "model_parallel" and value:
+                cuda_count = torch.cuda.device_count()
+                if cuda_count == 0:
+                    warnings.warn(
+                        "`model_parallel` is set to True but no CUDA devices are available. "
+                        "Setting `model_parallel` to False."
+                    )
+                    return False
+
+            if (
+                param == "sample_size"
+                and value != 0
+                and "model_parallel" in self.config
+                and self.config["model_parallel"]
+            ):
+                warnings.warn(
+                    "`sample_size` is not used with `model_parallel` = True. Setting `sample_size` to 0."
+                )
+                return 0
 
             return value
 
