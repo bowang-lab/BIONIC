@@ -2,6 +2,7 @@ from typing import List, Optional
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 LINE_WIDTH = 1.5
@@ -88,3 +89,22 @@ def plot_losses(
     plt.tight_layout()
 
     plt.savefig(plot_path)
+
+
+def save_losses(
+    train_losses: List[np.ndarray],
+    net_names: List[Path],
+    save_path: Path,
+    label_names: Optional[List[Path]] = None,
+) -> None:
+    """Saves training loss data in a .tsv file."""
+
+    train_losses = np.array(train_losses).T
+    n_epochs = len(train_losses[0])
+    x_epochs = np.arange(n_epochs)
+
+    index = net_names
+    if label_names is not None:
+        index += label_names
+    data = pd.DataFrame(train_losses, index=net_names, columns=x_epochs).T
+    data.to_csv(save_path, sep="\t")

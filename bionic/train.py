@@ -14,7 +14,7 @@ import torch.optim as optim
 import torch.multiprocessing
 
 from .utils.config_parser import ConfigParser
-from .utils.plotter import plot_losses
+from .utils.plotter import plot_losses, save_losses
 from .utils.preprocessor import Preprocessor
 from .utils.sampler import StatefulSampler, NeighborSamplerWithWeights
 from .utils.common import extend_path, cyan, magenta, Device
@@ -48,7 +48,6 @@ class Trainer:
             self.index,
             self.masks,
             self.weights,
-            self.features,
             self.adj,
             self.labels,
             self.label_masks,
@@ -95,7 +94,7 @@ class Trainer:
         return [
             NeighborSamplerWithWeights(
                 ad,
-                sizes=[2 for _ in range(self.params.gat_shapes["n_layers"])],
+                sizes=[self.params.neighbor_sample_size] * self.params.gat_shapes["n_layers"],
                 batch_size=self.params.batch_size,
                 sampler=StatefulSampler(torch.arange(len(self.index))),
                 shuffle=False,
@@ -136,9 +135,21 @@ class Trainer:
         model.apply(self._init_model_weights)
 
         # Load pretrained model
-        if self.params.load_pretrained_model:
+        if self.params.pretrained_model_path:
             typer.echo("Loading pretrained model...")
-            model.load_state_dict(torch.load(f"models/{self.params.out_name}_model.pt"))
+            missing_keys, unexpected_keys = model.load_state_dict(
+                torch.load(self.params.pretrained_model_path), strict=False
+            )
+            if missing_keys:
+                warnings.warn(
+                    "The following parameters were missing from the provided pretrained model:"
+                    f"{missing_keys}"
+                )
+            if unexpected_keys:
+                warnings.warn(
+                    "The following unexpected parameters were provided in the pretrained model:"
+                    f"{unexpected_keys}"
+                )
 
         # Push model to device
         if not self.params.model_parallel:
@@ -253,13 +264,10 @@ class Trainer:
         # Get random integers for batch.
         rand_int = StatefulSampler.step(len(self.index))
         int_splits = torch.split(rand_int, self.params.batch_size)
-        batch_features = self.features
 
         # Initialize loaders to current batch.
         if bool(self.params.sample_size):
             batch_loaders = [self.train_loaders[i] for i in rand_net_idx]
-            if isinstance(self.features, list):
-                batch_features = [self.features[i] for i in rand_net_idx]
 
             # Subset `masks` tensor.
             mask_splits = torch.split(self.masks[:, rand_net_idx][rand_int], self.params.batch_size)
@@ -267,8 +275,6 @@ class Trainer:
         else:
             batch_loaders = self.train_loaders
             mask_splits = torch.split(self.masks[rand_int], self.params.batch_size)
-            if isinstance(self.features, list):
-                batch_features = self.features
 
         # List of losses.
         if self.labels is not None:
@@ -287,13 +293,8 @@ class Trainer:
                 batch_labels_masks = [label_masks[node_ids] for label_masks in self.label_masks]
 
             if bool(self.params.sample_size):
-                training_datasets = [self.adj[i] for i in rand_net_idx]
                 output, _, _, _, label_preds = self.model(
-                    training_datasets,
-                    data_flows,
-                    batch_features,
-                    batch_masks,
-                    rand_net_idxs=rand_net_idx,
+                    data_flows, batch_masks, rand_net_idxs=rand_net_idx,
                 )
                 recon_losses = [
                     masked_scaled_mse(
@@ -308,10 +309,7 @@ class Trainer:
                     for j, i in enumerate(rand_net_idx)
                 ]
             else:
-                training_datasets = self.adj
-                output, _, _, _, label_preds = self.model(
-                    training_datasets, data_flows, batch_features, batch_masks
-                )
+                output, _, _, _, label_preds = self.model(data_flows, batch_masks)
                 recon_losses = [
                     masked_scaled_mse(
                         output,
@@ -396,11 +394,9 @@ class Trainer:
             label=f"{cyan('Forward Pass')}:",
             length=len(self.index),
         ) as progress:
-            for mask, idx, *data_flows in progress:
+            for mask, _, *data_flows in progress:
                 mask = mask.reshape((1, -1))
-                dot, emb, _, learned_scales, label_preds = self.model(
-                    self.adj, data_flows, self.features, mask, evaluate=True
-                )
+                _, emb, _, learned_scales, label_preds = self.model(data_flows, mask, evaluate=True)
                 emb_list.append(emb.detach().cpu().numpy())
 
                 if label_preds is not None:
@@ -429,6 +425,17 @@ class Trainer:
                 self.train_loss,
                 self.params.net_names,
                 extend_path(self.params.out_name, "_loss.png"),
+                self.params.label_names,
+            )
+
+        # Save losses per epoch
+        if self.params.save_loss_data:
+            if verbosity:
+                typer.echo("Saving loss data...")
+            save_losses(
+                self.train_loss,
+                self.params.net_names,
+                extend_path(self.params.out_name, "_loss.tsv"),
                 self.params.label_names,
             )
 

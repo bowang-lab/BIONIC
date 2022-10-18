@@ -21,9 +21,10 @@ class DefaultConfig:
         "learning_rate": 0.0005,  # Adam optimizer learning rate
         "embedding_size": 512,  # Dimensionality of output integrated features
         "shared_encoder": False,  # Whether all networks should use the same encoder
-        "svd_dim": 0,  # Dimensionality of network SVD approximation (0 will not perform SVD)
+        "svd_dim": 0,  # Deprecated. Will be safely ignored.
         "initialization": "kaiming",  # Method used to initialize BIONIC weights
         "lambda": None,  # Final loss is `lambda` * `rec_loss` + (1 - `lambda`) * `cls_loss`
+        "neighbor_sample_size": 2,  # Number of neighbors to sample per node each epoch
         "gat_shapes": {
             "dimension": 64,  # Dimension of each GAT layer
             "n_heads": 10,  # Number of attention heads for each GAT layer
@@ -32,7 +33,8 @@ class DefaultConfig:
         "save_network_scales": False,  # Whether to save internal learned network feature scaling
         "save_model": False,  # Whether to save the trained model or not
         "save_label_predictions": False,  # Whether to save supervised label predictions
-        "load_pretrained_model": False,  # Whether to load a pretrained model TODO
+        "load_pretrained_model": False,  # Deprecated, see `pretrained_model_path`
+        "pretrained_model_path": None,  # Path to pretrained model state dict
         "tensorboard": {
             "training": False,  # Whether to use tensorboard to log training metrics
             "embedding": False,  # Whether to use tensorflow embedding projector
@@ -40,6 +42,7 @@ class DefaultConfig:
             "comment": "",  # Comment to add to tensorboard output file name
         },
         "plot_loss": True,  # Whether to plot loss curves
+        "save_loss_data": False,  # Whether to save the training loss data in a .tsv file
         "model_parallel": False,  # Whether to distribute the model on multiple CUDA devices
     }
 
