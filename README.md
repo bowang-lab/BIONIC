@@ -66,7 +66,7 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
     
     For example, if we wanted to install the latest version of BIONIC to run on the CPU on a Linux system, we would run
     
-       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.4/bionic_model-0.2.4+cpu-cp38-cp38-linux_x86_64.whl
+       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.5/bionic_model-0.2.5+cpu-cp38-cp38-linux_x86_64.whl
 
     **NOTE:** There is a [known bug](https://github.com/pypa/pip/issues/7626) in certain versions of `pip` which may result in a `No matching distribution` error. If this occurs, install `pip==19.3.1` and try again.
 
@@ -118,8 +118,8 @@ The configuration keys are as follows:
 
 Argument | Default | Description
 --- | :---: | ---
-`net_names` | N/A | Filepaths of input networks. By specifying `"*"` after the path, BIONIC will integrate all networks in the directory.
-`label_names` | N/A | Filepaths of node label JSON files. An example node label file can be found [here](https://github.com/bowang-lab/BIONIC/blob/master/bionic/inputs/yeast_IntAct_complex_labels.json).
+`net_names` | `null` | Filepaths of input networks. By specifying `"*"` after the path, BIONIC will integrate all networks in the directory.
+`label_names` | `null` | Filepaths of node label JSON files. An example node label file can be found [here](https://github.com/bowang-lab/BIONIC/blob/master/bionic/inputs/yeast_IntAct_complex_labels.json).
 `out_name` | config file path | Path to prepend to all output files. If not specified it will be the path of the config file. `out_name` takes the format `path/to/output` where `output` is an extensionless output file name.
 `delimiter` | `" "` | Delimiter for input network files.
 `epochs` | `3000` | Number of training steps to run BIONIC for (see [**usage tips**](#usage-tips)).
@@ -128,9 +128,9 @@ Argument | Default | Description
 `learning_rate` | `0.0005` | Learning rate of BIONIC. Higher learning rates result in faster convergence but run the risk of unstable training (see [**usage tips**](#usage-tips)).
 `embedding_size` | `512` | Dimensionality of the learned integrated gene features (see [**usage tips**](#usage-tips)).
 `shared_encoder` | `false` | Whether to use the same graph attention layer (GAT) encoder for all the input networks. This may lead to better performance in certain circumstances.
-`svd_dim` | `0` | Dimensionality of initial network features singular value decomposition (SVD) approximation. As of v0.2.4 this is no longer required and is safely ignored.
 `initialization` | `"kaiming"` | Weight initialization scheme. Valid options are `"xavier"` or `"kaiming"`.
 `lambda` | N/A | Relative weighting between reconstruction and classification loss: `final_loss = lambda * rec_loss + (1 - lambda) * cls_loss`. Only relevant if `label_names` is specified. If `lambda` is not provided but `label_names` is, `lambda` will deafult to `0.95`.
+`neighbor_sample_size` | `2` | Size of neighborhoods to sample around each node for progressive GAT passes per training step (see [**usage tips**](#usage-tips)).
 `gat_shapes.dimension` | `64` | Dimensionality of each individual GAT head (see [**usage tips**](#usage-tips)).
 `gat_shapes.n_heads` | `10` | Number of attention heads for each network-specific GAT.
 `gat_shapes.n_layers` | `2` | Number of times each network is passed through its corresponding GAT. This number corresponds to the effective neighbourhood size of the convolution.
@@ -138,11 +138,13 @@ Argument | Default | Description
 `save_network_scales` | `false` | Whether to save the internal learned network features scaling coefficients.
 `save_label_predictions` | `false` | Whether to save the predicted node labels (if applicable).
 `save_model` | `true` | Whether to save the trained model parameters and state.
+`pretrained_model_path` | `null` | Path to a pretrained model (.pt file) to load parameters from.
 `tensorboard.training` | `false` | Whether to output training progress to TensorBoard.
 `tensorboard.embedding` | `false` | Whether to embed learned feature with TensorBoard projector.
 `tensorboard.log_dir` | `null` | Output directory of TensorBoard logging files. Default is `"runs"`. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
 `tensorboard.comment` | `""` | Comment to add to TensorBoard output file name. See [here](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter) for more information.
 `plot_loss` | `true` | Whether to plot the model loss curves after training.
+`save_loss_data` | `false` | Whether to save the training loss data in a .tsv file.
 
 The `.` notation indicates a nested field, so `gat_shapes.dimension` (for example) becomes
 
@@ -195,6 +197,6 @@ The [configuration parameters table](#configuration-file) provides usage tips fo
 - `epochs` should be increased as you integrate more networks. 10000-15000 epochs is not unreasonable for 50+ networks.
 - `embedding_size` directly affects the quality of learned features. We found the default `512` works for most networks, though it's worth experimenting with different sizes for your application. In general, higher `embedding_size` will encode more information present in the input networks but at the risk of also encoding noise.
 - `gat_shapes.dimension` should be increased for networks with many nodes. We found `128` - `256` is a good size for human networks, for example.
-
+- Small values for `neighbor_sample_size` tend to work better than large values.
 #### Input Networks
 - BIONIC runs faster and performs better with sparser networks - as a general rule, try to keep the average node degree below 50 for each network.
