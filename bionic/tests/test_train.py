@@ -71,6 +71,24 @@ class TestTrain:
         trainer.train()
         trainer.forward()
 
+    def test_model_save_completes(self):
+        mock_config_with_save = mock_config.copy()
+        mock_config_with_save["label_names"] = ["bionic/tests/inputs/mock_labels.json"]
+        mock_config_with_save["lambda"] = 0.95
+        mock_config_with_save["save_model"] = True
+        trainer = Trainer(mock_config_with_save)
+        trainer.train()
+        trainer.forward()
+
+    def test_model_load_completes(self):
+        mock_config_with_load = mock_config.copy()
+        mock_config_with_load[
+            "pretrained_model_path"
+        ] = "bionic/tests/outputs/mock_integration_model.pt"
+        trainer = Trainer(mock_config_with_load)
+        trainer.train()
+        trainer.forward()
+
     def test_supervised_trainer_with_multiple_labels_completes(self):
         mock_config_with_multiple_labels = mock_config.copy()
         mock_config_with_multiple_labels["label_names"] = [

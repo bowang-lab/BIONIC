@@ -155,9 +155,7 @@ class Bionic(nn.Module):
 
     def forward(
         self,
-        datasets: List[SparseTensor],
         data_flows: List[Tuple[int, Tensor, List[Adj]]],
-        features: Tensor,
         masks: Tensor,
         evaluate: bool = False,
         rand_net_idxs: Optional[np.ndarray] = None,
@@ -165,10 +163,8 @@ class Bionic(nn.Module):
         """Forward pass logic.
 
         Args:
-            datasets (List[SparseTensor]): Input networks. Not currently used.
             data_flows (List[Tuple[int, Tensor, List[Adj]]]): Sampled bi-partite data flows.
                 See PyTorch Geometric documentation for more details.
-            features (Tensor): 2D node features tensor. Not currently used.
             masks (Tensor): 2D masks indicating which nodes (rows) are in which networks (columns)
             evaluate (bool, optional): Used to turn off random sampling in forward pass.
                 Defaults to False.
@@ -263,9 +259,7 @@ class BionicParallel(Bionic):
 
     def forward(
         self,
-        datasets: List[SparseTensor],
         data_flows: List[Tuple[int, Tensor, List[Adj]]],
-        features: Tensor,
         masks: Tensor,
         evaluate: bool = False,
         rand_net_idxs: Optional[np.ndarray] = None,
