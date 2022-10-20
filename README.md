@@ -166,7 +166,7 @@ geneA geneC 0.75
 geneB geneD 1.0
 ```
 
-If the edge weight column is omitted, the network is considered binary (i.e. all edges will be given a weight of 1). The gene indentifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
+If the edge weight column is omitted, the network is considered binary (i.e. all edges will be given a weight of 1). The gene identifiers and edge weights are delimited with spaces by default. If you have network files that use different delimiters, this can be specified in the config file by setting the `delimiter` key.
 BIONIC assumes all networks are undirected and enforces this in its preprocessing step.
 
 ### Running BIONIC
