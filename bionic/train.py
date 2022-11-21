@@ -53,6 +53,17 @@ class Trainer:
             self.label_masks,
             self.class_names,
         ) = self._preprocess_inputs()
+
+        (
+            self.index_valid,
+            self.masks_valid,
+            self.weights_valid,
+            self.adj_valid,
+            self.labels_valid,
+            self.label_masks_valid,
+            self.class_names_valid,
+        ) = self._preprocess_inputs_valid()
+
         self.train_loaders = self._make_train_loaders()
         self.inference_loaders = self._make_inference_loaders()
         self.model, self.optimizer = self._init_model()
@@ -85,6 +96,15 @@ class Trainer:
         preprocessor = Preprocessor(
             self.params.net_names,
             label_names=self.params.label_names,
+            delimiter=self.params.delimiter,
+            svd_dim=self.params.svd_dim,
+        )
+        return preprocessor.process()
+
+    def _preprocess_inputs_valid(self):
+        preprocessor = Preprocessor(
+            self.params.net_names,
+            label_names=self.params.label_valid_names,
             delimiter=self.params.delimiter,
             svd_dim=self.params.svd_dim,
         )
@@ -404,8 +424,8 @@ class Trainer:
                         prediction_lists[i].append(torch.sigmoid(pred).detach().cpu().numpy())
 
         emb = np.concatenate(emb_list)
-        emb_df = pd.DataFrame(emb, index=self.index)
-        emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
+        # emb_df = pd.DataFrame(emb, index=self.index)
+        # emb_df.to_csv(extend_path(self.params.out_name, "_features.tsv"), sep="\t")
 
         # Free memory (necessary for sequential runs)
         if Device() == "cuda":
@@ -470,9 +490,11 @@ class Trainer:
                 for i, (pred, class_names) in enumerate(zip(prediction_lists, self.class_names)):
                     pred = np.concatenate(pred)
                     pred = pd.DataFrame(pred, index=self.index, columns=class_names)
-                    pred.to_csv(
-                        extend_path(self.params.out_name, f"_label_set_{i+1}_predictions.tsv"),
-                        sep="\t",
-                    )
+                    # pred.to_csv(
+                    #     extend_path(self.params.out_name, f"_label_set_{i+1}_predictions.tsv"),
+                    #     sep="\t",
+                    # )
 
         typer.echo(magenta("Complete!"))
+
+        return pred

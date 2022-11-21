@@ -5,14 +5,17 @@ from train import Trainer
 import argparse
 
 
-def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, trial):
+def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
 
     input_train_path = ["bionic/inputs/gene_data_train_0.json", "bionic/inputs/gene_data_train_1.json",
                         "bionic/inputs/gene_data_train_2.json", "bionic/inputs/gene_data_train_3.json",
                         "bionic/inputs/gene_data_train_4.json"]
 
+    input_valid_path = ["bionic/inputs/gene_data_valid_0.json", "bionic/inputs/gene_data_valid_1.json",
+                        "bionic/inputs/gene_data_valid_2.json", "bionic/inputs/gene_data_valid_3.json",
+                        "bionic/inputs/gene_data_valid_4.json"]
+
     config = {
-        "in_path": "path/to/input/networks",
         "net_names": ["bionic/inputs/Hein-2015.txt",
                       "bionic/inputs/Huttlin-2015.txt",
                       "bionic/inputs/Huttlin-2017.txt",
@@ -36,15 +39,15 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, trial):
         "save_label_predictions": True,
     }
 
-    out_name = f"path/to/output/directory/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_trial{trial}"
+    out_name = f"bionic/outputs/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_fold{fold}"
 
     config["out_name"] = out_name
-
-    config["in_path"] = input_train_path[trial]
+    config["label_names"] = [input_train_path[fold]]
+    config["label_valid_names"] = [input_valid_path[fold]]
 
     train_job = Trainer(config)
-
     train_job.train()
+    train_job.forward()
 
 
 if __name__ == "__main__":
