@@ -1,7 +1,7 @@
 import sys
 
 sys.path.append("path/to/BIONIC")
-from train import Trainer
+from bionic.train import Trainer
 import argparse
 import json
 
@@ -9,20 +9,24 @@ from sklearn.preprocessing import MultiLabelBinarizer
 import pandas as pd
 import numpy as np
 from sklearn.metrics import average_precision_score
+import logging
 
 
 def get_fold_validation_score(train_labels, valid_labels, train_job):
 
     # Create multi-hot encoding
-    mlb = MultiLabelBinarizer()
+
+    valid_diseases = np.unique(np.concatenate(list(valid_labels.values())))
+    mlb = MultiLabelBinarizer(classes=valid_diseases)  # from sklearn
     valid_labels_mh = mlb.fit_transform(valid_labels.values())
-    valid_labels_mh = pd.DataFrame(valid_labels_mh, index=valid_labels.keys())
+    valid_labels_mh = pd.DataFrame(valid_labels_mh, index=valid_labels.keys(), columns=mlb.classes_)
 
     union = train_job.index
     valid_genes = np.intersect1d(union, list(valid_labels.keys()))
 
     # Reindex `valid_labels_mh` to include only genes in `valid_genes`
     valid_labels = valid_labels_mh.reindex(valid_genes).fillna(0)
+
 
     # make sure validation labels and train labels have the same classes
     common_classes = np.intersect1d(train_labels.columns, valid_labels.columns)
@@ -74,12 +78,15 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, f
         "save_label_predictions": True,
     }
 
+    logging.warning('After config')
+
     out_name = f"bionic/outputs/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_lmb{lambda_}_fold{fold}"
 
     config["out_name"] = out_name
     config["label_names"] = [input_train_path[fold]]
 
     train_job = Trainer(config)
+    logging.warning('before train job')
     train_job.train()
 
     train_labels = train_job.forward()
@@ -102,7 +109,10 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--fold", type=int)
     args = parser.parse_args()
 
-    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold = (
+    logging.warning('args')
+
+
+    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold = (
         args.epochs,
         args.learning_rate,
         args.gat_dim,
@@ -112,4 +122,7 @@ if __name__ == "__main__":
         args.fold
     )
 
-    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold)
+    logging.warning('after args')
+
+
+    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold)
