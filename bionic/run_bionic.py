@@ -40,7 +40,7 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
     return avp
 
 
-def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
+def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold):
 
     input_train_path = ["bionic/inputs/gene_data_train_0.json", "bionic/inputs/gene_data_train_1.json",
                         "bionic/inputs/gene_data_train_2.json", "bionic/inputs/gene_data_train_3.json",
@@ -52,7 +52,6 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
 
     config = {
         "net_names": ["bionic/inputs/Hein-2015.txt",
-                      "bionic/inputs/Huttlin-2015.txt",
                       "bionic/inputs/Huttlin-2017.txt",
                       "bionic/inputs/Rolland-2014.txt"],
         "epochs": epochs,
@@ -63,6 +62,7 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
             "n_heads": gat_heads,
             "n_layers": gat_layers,
         },
+        "lambda": lambda_,
         "initialization": "xavier",
         "embedding_size": 1024,
         "save_model": False,
@@ -74,11 +74,10 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
         "save_label_predictions": True,
     }
 
-    out_name = f"bionic/outputs/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_fold{fold}"
+    out_name = f"bionic/outputs/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_lmb{lambda_}_fold{fold}"
 
     config["out_name"] = out_name
     config["label_names"] = [input_train_path[fold]]
-    # config["label_valid_names"] = [input_valid_path[fold]]
 
     train_job = Trainer(config)
     train_job.train()
@@ -94,21 +93,23 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, fold):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--trial", type=int)
     parser.add_argument("-e", "--epochs", type=int)
     parser.add_argument("-lr", "--learning_rate", type=float)
     parser.add_argument("-d", "--gat_dim", type=int)
     parser.add_argument("-gh", "--gat_heads", type=int)
     parser.add_argument("-l", "--gat_layers", type=int)
+    parser.add_argument("-lmb", "--lambd", type=float)
+    parser.add_argument("-f", "--fold", type=int)
     args = parser.parse_args()
 
-    epochs, learning_rate, gat_dim, gat_heads, gat_layers, trial = (
+    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold = (
         args.epochs,
         args.learning_rate,
         args.gat_dim,
         args.gat_heads,
         args.gat_layers,
-        args.trial,
+        args.lambd,
+        args.fold
     )
 
-    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, trial)
+    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold)

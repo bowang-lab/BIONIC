@@ -9,7 +9,8 @@ LEARNING_RATE=$2
 DIM=$3
 N_HEADS=$4
 N_LAYERS=$5
-FOLD=$6
+LAMBDA=$6
+FOLD=$7
 
 cd ~/envs
 
@@ -18,4 +19,4 @@ source activate $ENV_PATH/pytorchEnv
 
 cd /scratch/gobi1/forsterd/data/BIONIC-rebuttal/hyperopt/code/
 echo "Running run_bionic.py..."
-python run_bionic.py -e $EPOCHS -lr $LEARNING_RATE -d $DIM -gh $N_HEADS -l $N_LAYERS -f $FOLD
+python run_bionic.py -e $EPOCHS -lr $LEARNING_RATE -d $DIM -gh $N_HEADS -l $N_LAYERS -lmb $LAMBDA -f $FOLD

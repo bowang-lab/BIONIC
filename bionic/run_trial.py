@@ -12,12 +12,13 @@ def run_bionic():
     gat_dim = int(round(uniform.rvs(128, 256 - 128)))  # 128 to 256
     gat_heads = int(round(uniform.rvs(2, 5 - 2)))  # 2 to 5
     gat_layers = random.sample([1, 2], k=1)[0]  # 1 to 2
+    lambda_ = uniform.rvs(0.75, 0.98 - 0.75) # 0.75 to 0.98
 
     print(f"BIONIC {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers}")
 
     for fold in range(5):  # 5-fold CV
         os.system(
-            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {fold}"
+            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {fold}"
         )
 
 
