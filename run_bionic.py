@@ -13,9 +13,7 @@ import logging
 
 
 def get_fold_validation_score(train_labels, valid_labels, train_job):
-
     # Create multi-hot encoding
-
     valid_diseases = np.unique(np.concatenate(list(valid_labels.values())))
     mlb = MultiLabelBinarizer(classes=valid_diseases)  # from sklearn
     valid_labels_mh = mlb.fit_transform(valid_labels.values())
@@ -26,7 +24,6 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
 
     # Reindex `valid_labels_mh` to include only genes in `valid_genes`
     valid_labels = valid_labels_mh.reindex(valid_genes).fillna(0)
-
 
     # make sure validation labels and train labels have the same classes
     common_classes = np.intersect1d(train_labels.columns, valid_labels.columns)
@@ -45,7 +42,6 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
 
 
 def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold):
-
     input_train_path = ["bionic/inputs/gene_data_train_0.json", "bionic/inputs/gene_data_train_1.json",
                         "bionic/inputs/gene_data_train_2.json", "bionic/inputs/gene_data_train_3.json",
                         "bionic/inputs/gene_data_train_4.json"]
@@ -55,9 +51,15 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, f
                         "bionic/inputs/gene_data_valid_4.json"]
 
     config = {
-        "net_names": ["bionic/inputs/Hein-2015.txt",
-                      "bionic/inputs/Huttlin-2017.txt",
-                      "bionic/inputs/Rolland-2014.txt"],
+        "net_names": [
+            "bionic/inputs/bioid-cell-map.txt",
+            "bionic/inputs/bioplex-293t.txt",
+            "bionic/inputs/bioplex-hct116.txt",
+            "bionic/inputs/depmap-99-9.txt",
+            "bionic/inputs/opencell.txt",
+            "bionic/inputs/Hein-2015.txt",
+            "bionic/inputs/Rolland-2014.txt"
+        ],
         "epochs": epochs,
         "batch_size": 1024,
         "learning_rate": learning_rate,
@@ -111,7 +113,6 @@ if __name__ == "__main__":
 
     logging.warning('args')
 
-
     epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold = (
         args.epochs,
         args.learning_rate,
@@ -123,6 +124,5 @@ if __name__ == "__main__":
     )
 
     logging.warning('after args')
-
 
     run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold)
