@@ -10,6 +10,7 @@ slurm*
 run_sbatch.sh
 *.whl
 bionic/runs/
+.idea/
 
 !.gitkeep
 !src/outputs/features/.gitkeep

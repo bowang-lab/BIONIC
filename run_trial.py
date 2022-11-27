@@ -20,15 +20,20 @@ def run_bionic():
 
     for fold in range(5):  # 5-fold CV
         os.system(
-            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {experimental_head} {fold}"
+            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} "
+            f"{experimental_head} {fold} "
         )
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("-t", "--trial", required=True, type=int)
-    # args = parser.parse_args()
-    trial = 128
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--trial", required=False, type=int)
+    args = parser.parse_args()
+
+    if args.trial:
+        trial = 128
+    else:
+        trial = args.trial
 
     np.random.seed(42 * trial + 24)
     random.seed(42 * trial + 24)
