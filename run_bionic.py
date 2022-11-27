@@ -41,7 +41,7 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
     return avp
 
 
-def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, fold):
+def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, experimental_head, fold):
     input_train_path = ["bionic/inputs/gene_data_train_0.json", "bionic/inputs/gene_data_train_1.json",
                         "bionic/inputs/gene_data_train_2.json", "bionic/inputs/gene_data_train_3.json",
                         "bionic/inputs/gene_data_train_4.json"]
@@ -61,7 +61,7 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, f
             "bionic/inputs/Rolland-2014.txt"
         ],
         "epochs": epochs,
-        "batch_size": 1024,
+        "batch_size": 2048,
         "learning_rate": learning_rate,
         "gat_shapes": {
             "dimension": gat_dim,
@@ -78,11 +78,12 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, f
         "load_pretrained_model": False,
         "delimiter": " ",
         "save_label_predictions": True,
+        "head_type": experimental_head
     }
 
     logging.warning('After config')
 
-    out_name = f"bionic/outputs/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_lmb{lambda_}_fold{fold}"
+    out_name = f"bionic/outputs/{experimental_head}/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_lmb{lambda_}_fold{fold}"
 
     config["out_name"] = out_name
     config["label_names"] = [input_train_path[fold]]
@@ -108,21 +109,23 @@ if __name__ == "__main__":
     parser.add_argument("-gh", "--gat_heads", type=int)
     parser.add_argument("-l", "--gat_layers", type=int)
     parser.add_argument("-lmb", "--lambd", type=float)
+    parser.add_argument("-head", "--head", type=int)
     parser.add_argument("-f", "--fold", type=int)
     args = parser.parse_args()
 
     logging.warning('args')
 
-    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold = (
+    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, fold = (
         args.epochs,
         args.learning_rate,
         args.gat_dim,
         args.gat_heads,
         args.gat_layers,
         args.lambd,
+        args.head,
         args.fold
     )
 
     logging.warning('after args')
 
-    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, fold)
+    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, fold)

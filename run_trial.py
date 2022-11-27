@@ -8,17 +8,19 @@ from scipy.stats import uniform
 def run_bionic():
     # randomly sample hyperparameters
     epochs = int(round(uniform.rvs(3000, 6000 - 3000)))  # 3000 to 6000
-    learning_rate = uniform.rvs(0.0001, 0.001 - 0.0001)  # 0.0001 to 0.001
+    learning_rate = uniform.rvs(0.00005, 0.0005 - 0.00005)  # 0.00005 to 0.0005
     gat_dim = int(round(uniform.rvs(128, 256 - 128)))  # 128 to 256
     gat_heads = int(round(uniform.rvs(2, 5 - 2)))  # 2 to 5
     gat_layers = random.sample([1, 2], k=1)[0]  # 1 to 2
-    lambda_ = uniform.rvs(0.75, 0.98 - 0.75) # 0.75 to 0.98
+    lambda_ = uniform.rvs(0.05, 0.5 - 0.05)  # 0.05 to 0.5
 
-    print(f"BIONIC {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers}")
+    experimental_head = 0  # 0 for default linear head
+
+    print(f"BIONIC {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {experimental_head}")
 
     for fold in range(5):  # 5-fold CV
         os.system(
-            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {fold}"
+            f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {experimental_head} {fold}"
         )
 
 

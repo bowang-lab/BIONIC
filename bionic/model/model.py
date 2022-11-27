@@ -85,6 +85,7 @@ class Bionic(nn.Module):
         svd_dim: int = 0,
         shared_encoder: bool = False,
         n_classes: Optional[List[int]] = None,
+        head_type: int = 0,
     ):
         """The BIONIC model.
 
@@ -100,6 +101,8 @@ class Bionic(nn.Module):
                 + GAT) for all networks.
             n_classes (list of int, optional): Number of classes per supervised
                 standard, if supervised standards are provided.
+            head_type (int, optional): type of classification head.
+                Defaults to 0 (corresponds to defalt classification head)
         """
 
         super(Bionic, self).__init__()
@@ -112,6 +115,7 @@ class Bionic(nn.Module):
         self.shared_encoder = shared_encoder
         self.n_classes = n_classes
         self.gat_shapes = gat_shapes
+        self.head_type = head_type
 
         self.dimension: int = self.gat_shapes["dimension"]
         self.n_heads: int = self.gat_shapes["n_heads"]
@@ -141,15 +145,16 @@ class Bionic(nn.Module):
 
         # Supervised classification head
         if self.n_classes:
-            self.cls_heads = [
-                nn.Sequential(
-                    nn.Linear(self.emb_size, self.emb_size),  # improves optimization
-                    nn.Linear(self.emb_size, n_classes_),
-                )
-                for n_classes_ in self.n_classes
-            ]
-            for h, cls_head in enumerate(self.cls_heads):
-                self.add_module(f"Classification_Head_{h}", cls_head)
+            if self.head_type == 0:
+                self.cls_heads = [
+                    nn.Sequential(
+                        nn.Linear(self.emb_size, self.emb_size),  # improves optimization
+                        nn.Linear(self.emb_size, n_classes_),
+                    )
+                    for n_classes_ in self.n_classes
+                ]
+                for h, cls_head in enumerate(self.cls_heads):
+                    self.add_module(f"Classification_Head_{h}", cls_head)
         else:
             self.cls_heads = None
 

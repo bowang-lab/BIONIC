@@ -132,6 +132,7 @@ class Trainer:
             svd_dim=self.params.svd_dim,
             shared_encoder=self.params.shared_encoder,
             n_classes=n_classes,
+            head_type=self.params.head_type,
         )
         model.apply(self._init_model_weights)
 
