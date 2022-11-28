@@ -44,6 +44,7 @@ class DefaultConfig:
         "plot_loss": True,  # Whether to plot loss curves
         "save_loss_data": False,  # Whether to save the training loss data in a .tsv file
         "model_parallel": False,  # Whether to distribute the model on multiple CUDA devices
+        "head_type": 0,  # Classification head type
     }
 
     # Required parameters not specified in `_defaults`
