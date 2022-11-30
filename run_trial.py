@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--trial", required=False, type=int)
     args = parser.parse_args()
 
-    if args.trial:
+    if args.trial is None:
         trial = 128
     else:
         trial = args.trial

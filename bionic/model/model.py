@@ -13,6 +13,8 @@ from typing import Dict, List, Tuple, Optional
 
 from .layers import WGATConv, Interp
 
+from .classification_heads import *
+
 
 class BionicEncoder(nn.Module):
     def __init__(self, in_size: int, gat_shapes: Dict[str, int], alpha: float = 0.1):
@@ -153,8 +155,20 @@ class Bionic(nn.Module):
                     )
                     for n_classes_ in self.n_classes
                 ]
-                for h, cls_head in enumerate(self.cls_heads):
-                    self.add_module(f"Classification_Head_{h}", cls_head)
+
+            elif self.head_type == 1:
+                self.cls_heads = [
+                    BasicLeakyReLUHead(self.emb_size, n_classes_, slope=0.01) for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 2:
+                self.cls_heads = [
+                    LeakyReLUDropoutHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25)
+                    for n_classes_ in self.n_classes
+                ]
+
+            for h, cls_head in enumerate(self.cls_heads):
+                self.add_module(f"Classification_Head_{h}", cls_head)
         else:
             self.cls_heads = None
 
