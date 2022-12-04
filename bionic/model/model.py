@@ -167,6 +167,42 @@ class Bionic(nn.Module):
                     for n_classes_ in self.n_classes
                 ]
 
+            elif self.head_type == 3:
+                self.cls_heads = [
+                    MultilayerLeakyReLUDropoutHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_layers=3)
+                    for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 4:
+                self.cls_heads = [
+                    MultilayerLeakyReLUDropoutHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_layers=4)
+                    for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 5:
+                self.cls_heads = [
+                    MultilayerLeakyReLUDropoutHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_layers=5)
+                    for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 6:
+                self.cls_heads = [
+                    MultilayerSkipConnectionHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_blocks=3)
+                    for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 7:
+                self.cls_heads = [
+                    MultilayerSkipConnectionHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_blocks=4)
+                    for n_classes_ in self.n_classes
+                ]
+
+            elif self.head_type == 8:
+                self.cls_heads = [
+                    MultilayerSkipConnectionHead(self.emb_size, n_classes_, slope=0.01, dropout_rate=0.25, n_blocks=5)
+                    for n_classes_ in self.n_classes
+                ]
+
             for h, cls_head in enumerate(self.cls_heads):
                 self.add_module(f"Classification_Head_{h}", cls_head)
         else:
