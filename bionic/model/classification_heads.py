@@ -63,7 +63,6 @@ class MultilayerLeakyReLUDropoutHead(torch.nn.Module):
             x = self.activation(x)
 
         x = self.output_layer(x)
-        x = self.linear2(x)
         return x
 
 
@@ -120,5 +119,4 @@ class MultilayerSkipConnectionHead(torch.nn.Module):
             x = self.activation(x)
 
         x = self.output_layer(x)
-        x = self.linear2(x)
         return x
