@@ -48,7 +48,7 @@ class MultilayerLeakyReLUDropoutHead(torch.nn.Module):
         self.linear_layers = []
 
         for j in range(n_layers):
-            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))))
+            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))).to("cuda:0"))
 
         self.output_layer = nn.Linear(emb_size // (2 ** n_layers), n_classes)
 
@@ -102,9 +102,9 @@ class MultilayerSkipConnectionHead(torch.nn.Module):
             self.skip_connection_blocks.append(
                 nn.Sequential(
                     ResidualConnectionBlock(emb_size // (2 ** j), slope=slope)
-                )
+                ).to("cuda:0")
             )
-            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))))
+            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))).to("cuda:0"))
 
         self.output_layer = nn.Linear(emb_size // (2 ** n_blocks), n_classes)
 
