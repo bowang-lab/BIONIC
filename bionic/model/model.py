@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple, Optional
 from .layers import WGATConv, Interp
 
 from .classification_heads import *
+from .attention import AttentiveIntegration
 
 
 class BionicEncoder(nn.Module):
@@ -88,6 +89,7 @@ class Bionic(nn.Module):
         shared_encoder: bool = False,
         n_classes: Optional[List[int]] = None,
         head_type: int = 0,
+        attention: bool = False,
     ):
         """The BIONIC model.
 
@@ -119,6 +121,8 @@ class Bionic(nn.Module):
         self.gat_shapes = gat_shapes
         self.head_type = head_type
 
+        self.attention = attention
+
         self.dimension: int = self.gat_shapes["dimension"]
         self.n_heads: int = self.gat_shapes["n_heads"]
 
@@ -144,6 +148,12 @@ class Bionic(nn.Module):
 
         # Embedding
         self.emb = nn.Linear(self.integration_size, self.emb_size)
+
+        # Attentive integration
+        if self.attention:
+            self.attentive_integration_layer = AttentiveIntegration(
+                embedding_dim=self.integration_size, n_head=1,
+            )
 
         # Supervised classification head
         if self.n_classes:
@@ -240,12 +250,14 @@ class Bionic(nn.Module):
         else:
             idxs = list(range(self.n_modalities))
 
-        net_scales, interp_masks = self.interp(masks, idxs, evaluate)
+        if not self.attention:
+            net_scales, interp_masks = self.interp(masks, idxs, evaluate)
 
         # Define encoder logic.
         out_pre_cat_layers = []  # Final layers before concatenation, not currently used
 
         batch_size = data_flows[0][0]
+        embs_container = []
         x_store_modality = torch.zeros(
             (batch_size, self.integration_size), device=Device()
         )  # Tensor to store results from each modality.
@@ -258,11 +270,25 @@ class Bionic(nn.Module):
                 net_idx = idxs[i]
 
             x = self.encoders[net_idx](data_flow)
-            x = net_scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
+
+            if self.attention:
+                embs_container.append(x)
+            else:
+                x = net_scales[:, i] * interp_masks[:, i].reshape((-1, 1)) * x
             x_store_modality += x
 
         # Embedding
-        emb = self.emb(x_store_modality)
+        if self.attention:
+            embs = torch.stack(embs_container, dim=1)
+
+            emb = self.attentive_integration_layer(
+                embeddings=embs, attention_mask=masks, return_att_scores=False
+            )
+
+            emb = emb.mean(dim=1)
+            emb = self.emb(emb)
+        else:
+            emb = self.emb(x_store_modality)
 
         # Dot product (network reconstruction)
         dot = torch.mm(emb, torch.t(emb))

@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-#
-# nn.Linear(self.emb_size, self.emb_size),  # improves optimization
-# nn.Linear(self.emb_size, n_classes_),
 
 
 class BasicLeakyReLUHead(torch.nn.Module):

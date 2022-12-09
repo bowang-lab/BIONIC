@@ -133,6 +133,7 @@ class Trainer:
             shared_encoder=self.params.shared_encoder,
             n_classes=n_classes,
             head_type=self.params.head_type,
+            attention=self.params.attention,
         )
         model.apply(self._init_model_weights)
 

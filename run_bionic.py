@@ -41,7 +41,7 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
     return avp
 
 
-def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, experimental_head, fold):
+def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, experimental_head, attention, fold):
     input_train_path = ["bionic/inputs/gene_data_train_0.json", "bionic/inputs/gene_data_train_1.json",
                         "bionic/inputs/gene_data_train_2.json", "bionic/inputs/gene_data_train_3.json",
                         "bionic/inputs/gene_data_train_4.json"]
@@ -78,7 +78,8 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, e
         "load_pretrained_model": False,
         "delimiter": " ",
         "save_label_predictions": True,
-        "head_type": experimental_head
+        "head_type": experimental_head,
+        "attention": attention,
     }
 
     logging.warning('After config')
@@ -110,12 +111,13 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--gat_layers", type=int)
     parser.add_argument("-lmb", "--lambd", type=float)
     parser.add_argument("-head", "--head", type=int)
+    parser.add_argument("-att", "--attention", type=int)
     parser.add_argument("-f", "--fold", type=int)
     args = parser.parse_args()
 
     logging.warning('args')
 
-    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, fold = (
+    epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, attention, fold = (
         args.epochs,
         args.learning_rate,
         args.gat_dim,
@@ -123,9 +125,10 @@ if __name__ == "__main__":
         args.gat_layers,
         args.lambd,
         args.head,
+        args.attention,
         args.fold
     )
 
     logging.warning('after args')
 
-    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, fold)
+    run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambd, experimental_head, attention, fold)

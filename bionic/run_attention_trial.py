@@ -15,7 +15,7 @@ def run_bionic():
     lambda_ = uniform.rvs(0.05, 0.5 - 0.05)  # 0.05 to 0.5
 
     experimental_head = 0  # 0 for default linear head
-    attention = 0
+    attention = 1
 
     print(f"BIONIC {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} {experimental_head} {attention}")
 

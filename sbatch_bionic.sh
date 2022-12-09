@@ -11,7 +11,8 @@ N_HEADS=$4
 N_LAYERS=$5
 LAMBDA=$6
 EXPERIMENTAL_HEAD=$7
-FOLD=$8
+ATTENTION=$8
+FOLD=$9
 
 cd /scratch/gobi1/odatskiv/
 
@@ -20,4 +21,4 @@ cd /scratch/gobi1/odatskiv/
 cd /scratch/gobi1/odatskiv/BIONIC/
 
 echo "Running run_bionic.py..."
-python run_bionic.py -e $EPOCHS -lr $LEARNING_RATE -d $DIM -gh $N_HEADS -l $N_LAYERS -lmb $LAMBDA -head $EXPERIMENTAL_HEAD -f $FOLD
+python run_bionic.py -e $EPOCHS -lr $LEARNING_RATE -d $DIM -gh $N_HEADS -l $N_LAYERS -lmb $LAMBDA -head $EXPERIMENTAL_HEAD -att $ATTENTION -f $FOLD
