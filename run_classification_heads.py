@@ -12,6 +12,7 @@ def run_bionic():
     gat_heads = 5
     gat_layers = 2
     lambda_ = 0.47365
+    attention = 0
 
     for experimental_head in range(1, 9):  # classification heads from 1 to 8
 
@@ -23,7 +24,7 @@ def run_bionic():
         for fold in range(5):  # 5-fold CV
             os.system(
                 f"sbatch sbatch_bionic.sh {epochs} {learning_rate} {gat_dim} {gat_heads} {gat_layers} {lambda_} "
-                f"{experimental_head} {fold} "
+                f"{experimental_head} {attention} {fold} "
             )
 
 
