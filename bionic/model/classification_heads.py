@@ -70,15 +70,13 @@ class ResidualConnectionBlock(nn.Module):
         self.shortcut = nn.Sequential()
 
         self.linear2 = nn.Linear(input_size, input_size)
-        self.bn1 = nn.BatchNorm1d(input_size)
-        self.bn2 = nn.BatchNorm1d(input_size)
 
         self.activation = nn.LeakyReLU(negative_slope=slope)
 
     def forward(self, x):
         shortcut = self.shortcut(x)
-        x = self.activation(self.bn1(self.linear1(x)))
-        x = self.activation(self.bn2(self.linear2(x)))
+        x = self.activation(self.linear1(x))
+        x = self.activation(self.linear2(x))
         x = x + shortcut
         x = self.activation(x)
         return x
