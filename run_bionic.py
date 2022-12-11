@@ -4,6 +4,7 @@ sys.path.append("path/to/BIONIC")
 from bionic.train import Trainer
 import argparse
 import json
+import os
 
 from sklearn.preprocessing import MultiLabelBinarizer
 import pandas as pd
@@ -83,6 +84,9 @@ def run_bionic(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, e
     }
 
     logging.warning('After config')
+
+    if not os.path.exists(f"bionic/outputs/{experimental_head}"):
+        os.mkdir(f"bionic/outputs/{experimental_head}")
 
     out_name = f"bionic/outputs/{experimental_head}/BIONIC_e{epochs}_lr{learning_rate}_d{gat_dim}_h{gat_heads}_l{gat_layers}_lmb{lambda_}_fold{fold}"
 

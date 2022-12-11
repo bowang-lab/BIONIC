@@ -252,6 +252,8 @@ class Bionic(nn.Module):
 
         if not self.attention:
             net_scales, interp_masks = self.interp(masks, idxs, evaluate)
+        else:
+            net_scales = None
 
         # Define encoder logic.
         out_pre_cat_layers = []  # Final layers before concatenation, not currently used

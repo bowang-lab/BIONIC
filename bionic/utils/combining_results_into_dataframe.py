@@ -43,6 +43,6 @@ def show_best_param(df):
 
 
 if __name__ == "__main__":
-    df = res_into_df("/home/oleh/bionic/outputs/0/")
-    df = group_by_df(df, "/home/oleh/bionic/outputs/0/")
+    df = res_into_df("bionic/outputs/0/")
+    df = group_by_df(df, "bionic/outputs/0/")
     show_best_param(df)
