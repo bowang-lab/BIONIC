@@ -42,25 +42,22 @@ class MultilayerLeakyReLUDropoutHead(torch.nn.Module):
     def __init__(self, emb_size, n_classes, slope=0.01, dropout_rate=0.25, n_layers=3):
         super(MultilayerLeakyReLUDropoutHead, self).__init__()
 
-        self.linear_layers = []
-
+        model = []
         for j in range(n_layers):
-            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))).to("cuda:0"))
+            model += [self.get_layers(emb_size // (2 ** j), emb_size // (2 ** (j + 1)))]
 
-        self.output_layer = nn.Linear(emb_size // (2 ** n_layers), n_classes)
+        model += [nn.Linear(emb_size // (2 ** n_layers), n_classes)]
 
-        self.activation = nn.LeakyReLU(negative_slope=slope)
-        self.dropout = nn.Dropout(dropout_rate)
+        self.model = nn.Sequential(*model)
+
+    def get_layers(self, in_size, out_size, dropout_rate=0.25, slope=0.01):
+        layers = [nn.Linear(in_size, out_size)]
+        layers += [nn.Dropout(dropout_rate)]
+        layers += [nn.LeakyReLU(negative_slope=slope)]
+        return nn.Sequential(*layers)
 
     def forward(self, x):
-
-        for linear_layer in self.linear_layers:
-            x = linear_layer(x)
-            x = self.dropout(x)
-            x = self.activation(x)
-
-        x = self.output_layer(x)
-        return x
+        return self.model(x)
 
 
 class ResidualConnectionBlock(nn.Module):
@@ -89,29 +86,20 @@ class MultilayerSkipConnectionHead(torch.nn.Module):
 
         self.n_blocks = n_blocks
 
-        self.skip_connection_blocks = []
-        self.linear_layers = []
+        model = []
 
         for j in range(n_blocks):
-            self.skip_connection_blocks.append(
-                nn.Sequential(
+            model += [nn.Sequential(
                     ResidualConnectionBlock(emb_size // (2 ** j), slope=slope)
-                ).to("cuda:0")
-            )
-            self.linear_layers.append(nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1))).to("cuda:0"))
+                )]
 
-        self.output_layer = nn.Linear(emb_size // (2 ** n_blocks), n_classes)
+            model += [nn.Linear(emb_size // (2 ** j), emb_size // (2 ** (j + 1)))]
+            model += [nn.Dropout(dropout_rate)]
+            model += [nn.LeakyReLU(negative_slope=slope)]
 
-        self.activation = nn.LeakyReLU(negative_slope=slope)
-        self.dropout = nn.Dropout(dropout_rate)
+        model += [nn.Linear(emb_size // (2 ** n_blocks), n_classes)]
+
+        self.model = nn.Sequential(*model)
 
     def forward(self, x):
-
-        for j in range(self.n_blocks):
-            x = self.skip_connection_blocks[j](x)
-            x = self.linear_layers[j](x)
-            x = self.dropout(x)
-            x = self.activation(x)
-
-        x = self.output_layer(x)
-        return x
+        return self.model(x)
