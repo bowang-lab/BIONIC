@@ -1,4 +1,4 @@
-![Build status](https://img.shields.io/github/workflow/status/bowang-lab/BIONIC/Python%20package)
+![Build status](https://img.shields.io/github/actions/workflow/status/bowang-lab/BIONIC/build-wheels.yml?branch=master)
 ![Version](https://img.shields.io/github/v/release/bowang-lab/BIONIC)
 ![Top language](https://img.shields.io/github/languages/top/bowang-lab/BIONIC)
 ![License](https://img.shields.io/github/license/bowang-lab/BIONIC)
