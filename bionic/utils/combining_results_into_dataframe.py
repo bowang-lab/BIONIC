@@ -26,6 +26,7 @@ def res_into_df(folder_path):
                         'AP': float(lines[0])}, ignore_index=True)
 
     file_name_csv = folder_path + "joint_results.csv"
+    print("file save into ", file_name_csv)
     df.to_csv(file_name_csv)
     return df
 
@@ -66,12 +67,14 @@ def group_by_df(df, path):
         df = df.groupby(['head_type']).mean()
         df.rename(columns={'AP': 'mAP'}, inplace=True)
         file_name_csv = path + "joint_group_results.csv"
+        print("file save into ", file_name_csv)
         df.to_csv(file_name_csv)
         return df
     else:
         df = df.groupby(['learning_rate']).mean()
         df.rename(columns={'AP': 'mAP'}, inplace=True)
         file_name_csv = path + "joint_group_results.csv"
+        print("file save into ", file_name_csv)
         df.to_csv(file_name_csv)
         return df
 
@@ -81,6 +84,6 @@ def show_best_param(df):
 
 
 if __name__ == "__main__":
-    df = res_into_df_for_headers("/home/oleh/bionic/resHead/outputs")
-    df = group_by_df(df, "/home/oleh/bionic/resHead/outputs")
+    df = res_into_df("/home/oleh/bionic/outputs/4/4/")
+    df = group_by_df(df, "/home/oleh/bionic/resHead/outputs/4/4/")
     show_best_param(df)
