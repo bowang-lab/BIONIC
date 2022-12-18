@@ -38,7 +38,7 @@ def get_fold_validation_score(train_labels, valid_labels, train_job):
 
     avp = average_precision_score(valid_labels, train_labels, average="micro")
 
-    return avp
+    return avp, valid_labels
 
 
 def run_bionic_train(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lambda_, experimental_head, attention):
@@ -88,10 +88,12 @@ def run_bionic_train(epochs, learning_rate, gat_dim, gat_heads, gat_layers, lamb
     train_labels = train_job.forward()
     test_labels = json.load(open("bionic/inputs/test_gene_data.json", "r"))
 
-    avp = get_fold_validation_score(train_labels, test_labels, train_job)
+    avp, test_labels = get_fold_validation_score(train_labels, test_labels, train_job)
 
     with open(f"{out_name}.txt", "w") as out_file:
         out_file.write(str(avp))
+
+    test_labels.to_csv(f"{out_name}.csv")
 
 
 if __name__ == "__main__":
