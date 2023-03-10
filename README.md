@@ -66,7 +66,7 @@ If you are installing a CUDA capable BIONIC wheel (i.e. not CPU), first ensure y
     
     For example, if we wanted to install the latest version of BIONIC to run on the CPU on a Linux system, we would run
     
-       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.5/bionic_model-0.2.5+cpu-cp38-cp38-linux_x86_64.whl
+       $ pip install https://github.com/bowang-lab/BIONIC/releases/download/v0.2.6/bionic_model-0.2.6+cpu-cp38-cp38-linux_x86_64.whl
 
     **NOTE:** There is a [known bug](https://github.com/pypa/pip/issues/7626) in certain versions of `pip` which may result in a `No matching distribution` error. If this occurs, install `pip==19.3.1` and try again.
 
@@ -118,7 +118,7 @@ The configuration keys are as follows:
 
 Argument | Default | Description
 --- | :---: | ---
-`net_names` | `null` | Filepaths of input networks. By specifying `"*"` after the path, BIONIC will integrate all networks in the directory.
+`net_names` | `null` | List of filepaths of input networks. If a string is used instead with a `"*"` after the path, BIONIC will integrate all networks in the corresponding directory.
 `label_names` | `null` | Filepaths of node label JSON files. An example node label file can be found [here](https://github.com/bowang-lab/BIONIC/blob/master/bionic/inputs/yeast_IntAct_complex_labels.json).
 `out_name` | config file path | Path to prepend to all output files. If not specified it will be the path of the config file. `out_name` takes the format `path/to/output` where `output` is an extensionless output file name.
 `delimiter` | `" "` | Delimiter for input network files.

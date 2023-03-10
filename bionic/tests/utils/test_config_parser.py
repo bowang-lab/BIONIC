@@ -45,7 +45,7 @@ class TestConfigParser:
         mock_config_asterisk_names["net_names"] = "*"
         cp = ConfigParser(mock_config_asterisk_names)
         params = cp.parse()
-        assert isinstance(params.net_names, list)
+        assert isinstance(params.net_names, list) and len(params.net_names)
 
     def test_config_fields_replace_defaults(self):
         cp = ConfigParser(mock_config)

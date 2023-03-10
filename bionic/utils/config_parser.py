@@ -119,7 +119,7 @@ class ConfigParser(DefaultConfig):
 
     def _resolve_asterisk_path(self, path: Path) -> List[Path]:
         directory = path.parent
-        return [p for p in directory.iterdir() if p.is_dir()]
+        return [p for p in directory.iterdir() if not p.is_dir()]
 
     def _get_param(self, param: str, default: Any) -> Any:
         if param in self.config:
