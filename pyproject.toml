@@ -50,7 +50,7 @@ tensorboard = "^2.7.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
-ipython = "^7.17.0"
+ipython = "^8.10.0"
 pre-commit = "^2.6.0"
 flake8 = "^3.8.3"
 
